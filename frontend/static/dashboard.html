@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MoniFy-Ping — Monitoring Dashboard</title>
   <meta name="description" content="MoniFy-Ping: Professional uptime monitoring platform.">
-  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="css/custom.css">
+  <link rel="stylesheet" href="/static/css/custom.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config={corePlugins:{preflight:false},darkMode:'class',theme:{extend:{colors:{
@@ -28,56 +28,7 @@
 <div class="app-shell">
 
   <!-- ═══════════════ SIDEBAR ═══════════════ -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-icon"><img src="logo.jpg" alt="MoniFy-Ping"></div>
-      <span class="sidebar-logo-text">MoniFy-Ping</span>
-    </div>
-
-    <nav class="sidebar-nav">
-      <a href="#" id="uptime-link" class="nav-item active">
-        <i data-lucide="activity"></i> Monitoring
-      </a>
-      <a href="incidents.html" id="incidents-link" class="nav-item">
-        <i data-lucide="alert-circle"></i> Incidents
-      </a>
-      <a href="#" id="status-pages-link" class="nav-item">
-        <i data-lucide="wifi"></i> Status pages
-      </a>
-      <a href="#" class="nav-item">
-        <i data-lucide="clock"></i> Maintenance
-      </a>
-      <a href="#" class="nav-item">
-        <i data-lucide="users"></i> Team members
-      </a>
-      <a href="#" id="infrastructure-link" class="nav-item">
-        <i data-lucide="link"></i> Integrations &amp; API
-      </a>
-    </nav>
-
-    <div class="sidebar-footer">
-      <a href="#" class="nav-item">
-        <i data-lucide="life-buoy"></i> Support
-      </a>
-      <a href="#" class="nav-item">
-        <i data-lucide="file-text"></i> Docs
-      </a>
-    </div>
-
-    <div class="sidebar-user">
-      <div class="sidebar-user-info">
-        <div class="user-avatar" id="user-avatar">LA</div>
-        <div class="sidebar-user-meta">
-          <span class="sidebar-user-name" id="user-name">Loading...</span>
-          <span class="sidebar-user-role" id="user-role">Super Admin</span>
-        </div>
-      </div>
-      <div class="sidebar-user-actions">
-        <button id="open-settings-btn" class="icon-btn" title="Settings"><i data-lucide="settings"></i></button>
-        <button id="logout-btn" class="icon-btn danger" title="Logout"><i data-lucide="log-out"></i></button>
-      </div>
-    </div>
-  </aside>
+  <div id="sidebar-container"></div>
 
   <!-- ═══════════════ MAIN ═══════════════ -->
   <main class="main-content">
@@ -395,8 +346,11 @@
 })();
 </script>
 
-<script src="js/toast.js"></script>
-<script src="js/app.js?v=2"></script>
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/dashboard.js"></script>
+<script src="/static/js/toast.js"></script>
 <script>lucide.createIcons();</script>
 </body>
 </html>

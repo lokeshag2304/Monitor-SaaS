@@ -1,18 +1,83 @@
-const API_URL = 'http://127.0.0.1:8000';
-let token = localStorage.getItem('token');
-let currentUser = {}; 
+(function() {
+    const API_URL = window.API_URL || window.location.origin;
+    let token = localStorage.getItem('token');
+    window.token = token;
+    let currentUser = {}; 
+    window.currentUser = currentUser;
 
 // ============================================
 // 1. AUTH CHECK & REDIRECT
 // ============================================
 if (!token) {
-    window.location.href = '../index.html';
+    window.location.href = '/';
 }
 
-document.getElementById('logout-btn').addEventListener('click', () => {
-    localStorage.removeItem('token');
-    window.location.href = '../index.html';
-});
+    // Unified Sidebar Loading
+    async function loadSidebar() {
+        const sidebarContainer = document.getElementById('sidebar-container');
+        if (!sidebarContainer) return;
+        
+        try {
+            const res = await fetch('/static/components/sidebar.html');
+            if (res.ok) {
+                sidebarContainer.innerHTML = await res.text();
+                initSidebarEvents();
+                if (window.lucide) lucide.createIcons();
+            }
+        } catch (err) {
+            console.error('Sidebar load failed:', err);
+        }
+    }
+
+    function initSidebarEvents() {
+        const logoutBtn = document.getElementById('logout-btn') || document.getElementById('logout-btn-sidebar');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            });
+        }
+
+        const settingsBtn = document.getElementById('open-settings-btn') || document.getElementById('open-settings-btn-sidebar');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                openSettingsView();
+            });
+        }
+
+        // Sidebar Navigation Links
+        const navLinks = {
+            'uptime-link': 'uptime-view',
+            'incidents-link': 'incidents-view',
+            'reports-link': 'reports-view', // Note: reports often has its own page
+            'status-pages-link': 'status-pages-view',
+            'infrastructure-link': 'infrastructure-view',
+            'notifications-link': 'notifications-view'
+        };
+
+        Object.keys(navLinks).forEach(id => {
+            const link = document.getElementById(id);
+            if (link) {
+                link.addEventListener('click', (e) => {
+                    const viewId = navLinks[id];
+                    // If we are on dashboard.html, we showView, else we might need to redirect
+                    if (document.getElementById(viewId)) {
+                        e.preventDefault();
+                        showView(viewId);
+                    }
+                });
+            }
+        });
+    }
+
+    // Call sidebar load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadSidebar);
+    } else {
+        loadSidebar();
+    }
 
 // ============================================
 // 2. THEME TOGGLE FUNCTIONALITY
@@ -80,11 +145,7 @@ function openSettingsView() {
 }
 window.openSettingsView = openSettingsView; // Expose globally
 
-// Attach settings button event listener
-const settingsBtn = document.getElementById('open-settings-btn');
-if (settingsBtn) {
-    settingsBtn.addEventListener('click', openSettingsView);
-}
+// Attach settings button event listener (moved to initSidebarEvents)
 
 // ============================================
 // 5. SIDEBAR NAVIGATION
@@ -107,16 +168,8 @@ function showView(viewId) {
     if (activeLink) activeLink.classList.add('active');
 }
 
-// Uptime link
-const uptimeLink = document.getElementById('uptime-link') || document.querySelector('nav a:first-child');
-if (uptimeLink) {
-    uptimeLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showView('uptime-view');
-        uptimeLink.classList.add('active');
-    });
-    uptimeLink.setAttribute('data-view', 'uptime-view');
-}
+
+// Pagespeed link
 
 // Pagespeed link
 const pagespeedLink = document.getElementById('pagespeed-link');
@@ -127,47 +180,9 @@ if (pagespeedLink) {
     });
 }
 
-// Infrastructure link
-const infrastructureLink = document.getElementById('infrastructure-link');
-if (infrastructureLink) {
-    infrastructureLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showView('infrastructure-view');
-        loadInfrastructureView();
-    });
-    infrastructureLink.setAttribute('data-view', 'infrastructure-view');
-}
-
-// Notifications link
-const notificationsLink = document.getElementById('notifications-link');
-if (notificationsLink) {
-    notificationsLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showView('notifications-view');
-        loadNotificationsView();
-    });
-    notificationsLink.setAttribute('data-view', 'notifications-view');
-}
-
-// Incidents link
-const incidentsLink = document.getElementById('incidents-link');
-if (incidentsLink) {
-    incidentsLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showView('incidents-view');
-        loadIncidentsView();
-    });
-    incidentsLink.setAttribute('data-view', 'incidents-view');
-}
-
 // Status Pages link
 const statusPagesLink = document.getElementById('status-pages-link');
 if (statusPagesLink) {
-    statusPagesLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showView('status-pages-view');
-        loadStatusPagesView();
-    });
     statusPagesLink.setAttribute('data-view', 'status-pages-view');
 }
 
@@ -352,7 +367,7 @@ function renderCardsToDOM(filteredWebsites) {
             let ownerCol = adminMode ? `<div style="font-size:12px; font-weight:600; color:#8aafc8; display:flex; align-items:center;"><i data-lucide="user" style="width:12px; height:12px; margin-right:6px;"></i> ${site.owner_name || 'System Admin'}</div>` : '';
             
             html += `
-            <div class="monitor-card ${statusClass}" style="cursor: pointer; ${gridStyle} ${groupStyles}" onclick="window.location.href='monitor.html?id=${site.id}'">
+            <div class="monitor-card ${statusClass}" style="cursor: pointer; ${gridStyle} ${groupStyles}" onclick="window.location.href='/monitors/${site.id}'">
               
               <div class="card-info" style="display:flex; align-items:flex-start; gap:8px;">
                 <div style="color:${dotColor}; font-size:12px; margin-top:2px;">●</div>
@@ -370,7 +385,7 @@ function renderCardsToDOM(filteredWebsites) {
               </div>
     
               <div style="color:#c8d6e8; font-size:13px; display:flex; align-items:center; gap:6px;">
-                <i data-lucide="clock" style="width:13px; height:13px; color:#8aafc8;"></i> ${site.interval || 5} min
+                <i data-lucide="clock" style="width:13px; height:13px; color:#8aafc8;"></i> ${site.check_interval} min
               </div>
               
               <div class="card-bar-col" style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; width:100%;">
@@ -380,8 +395,9 @@ function renderCardsToDOM(filteredWebsites) {
                 <div class="uptime-pct" style="font-size:11px; color:#4d6a80; margin-left:8px;">${sitePct}%</div>
               </div>
               
-              <div class="card-action" style="justify-self:end;">
-                <button class="btn-delete" style="padding:5px 14px; border-radius:6px; font-size:11.5px;" onmouseenter="this.style.boxShadow='0 0 10px rgba(239,68,68,0.2)'" onmouseleave="this.style.boxShadow='none'" onclick="event.stopPropagation(); deleteWebsite(${site.id})">Delete</button>
+              <div class="card-action" style="justify-self:end; display:flex; gap:6px;">
+                <button class="btn-edit" style="padding:5px 12px; border-radius:6px; font-size:11px; background:rgba(255,255,255,0.05); color:#b8cfe0; border:1px solid rgba(255,255,255,0.1); cursor:pointer;" onmouseenter="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff';" onmouseleave="this.style.background='rgba(255,255,255,0.05)';this.style.color='#b8cfe0';" onclick="event.stopPropagation(); window.location.href='/monitors/${site.id}/edit'">Edit</button>
+                <button class="btn-delete" style="padding:5px 12px; border-radius:6px; font-size:11px;" onmouseenter="this.style.boxShadow='0 0 10px rgba(239,68,68,0.2)'" onmouseleave="this.style.boxShadow='none'" onclick="event.stopPropagation(); deleteWebsite(${site.id})">Delete</button>
               </div>
               
             </div>
@@ -1044,5 +1060,7 @@ if (document.readyState === 'loading') {
 loadDashboard();
 }
 
-// Poll for updates every 5 seconds
-setInterval(loadDashboard, 5000);
+    // Poll for updates every 5 seconds
+    setInterval(loadDashboard, 5000);
+
+})();

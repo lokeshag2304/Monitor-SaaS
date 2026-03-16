@@ -74,7 +74,7 @@
             successDiv.classList.add('hidden');
 
             try {
-                const res = await fetch('http://127.0.0.1:8000/auth/register', {
+                const res = await fetch(window.location.origin + '/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password, role: 'user' })
@@ -85,7 +85,7 @@
                     successDiv.innerText = 'Account created! Redirecting to login...';
                     successDiv.classList.remove('hidden');
                     setTimeout(() => {
-                        window.location.href = 'index.html';
+                        window.location.href = '/';
                     }, 2000);
                 } else {
                     errorDiv.innerText = data.detail || 'Registration failed.';

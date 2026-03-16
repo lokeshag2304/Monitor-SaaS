@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports — MoniFy-Ping</title>
+  <link rel="stylesheet" href="/static/css/custom.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --bg-deep: #060b18;
+      --bg-card: rgba(8, 14, 30, 0.65);
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --text-dim: #4d6a80;
+      --border-glass: rgba(255, 255, 255, 0.05);
+    }
+
+    body {
+      background-color: var(--bg-deep);
+      overflow: hidden;
+    }
+
+    .sidebar {
+       background: rgba(4, 8, 18, 0.95);
+       border-right: 1px solid var(--border-glass);
+       display: flex;
+       flex-direction: column;
+       z-index: 100;
+    }
+
+    .nav-item.active {
+      background: rgba(59, 130, 246, 0.15);
+      color: #fff;
+      border-right: 3px solid var(--accent-blue);
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 15px;
+      border-top: 1px solid var(--border-glass);
+    }
+
+    .user-profile-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .user-profile-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-blue);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    /* Report Layout */
+    .report-grid-top {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .report-card-lg {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .report-title-top {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+
+    .gauge-container {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .gauge-circle {
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+
+    .gauge-circle svg {
+      transform: rotate(-90deg);
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.05);
+      stroke-width: 10;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke: var(--accent-green);
+      stroke-width: 10;
+      stroke-linecap: round;
+      transition: stroke-dasharray 1s ease;
+      filter: drop-shadow(0 0 5px var(--accent-green));
+    }
+
+    .gauge-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .metric-main {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--accent-green);
+      margin-bottom: 2px;
+      letter-spacing: -1px;
+    }
+
+    .metric-sub {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .metric-mini {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .spark-container {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 200px;
+      height: 80px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .summary-section-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      min-height: 140px;
+    }
+
+    .summary-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 15px;
+    }
+
+    .summary-val {
+      font-size: 32px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .summary-meta {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .summary-spark {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 50px;
+      opacity: 0.3;
+    }
+
+    .btn-export {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-export:hover {
+      background: rgba(59, 130, 246, 0.2);
+    }
+
+    .badge-period {
+      background: rgba(37, 99, 235, 0.15);
+      color: #3b82f6;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      margin-left: 12px;
+    }
+
+    .main-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particles-canvas"></canvas>
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<div class="app-shell">
+
+  <div id="sidebar-container"></div>
+
+  <main class="main-content" id="report-content" style="overflow-y: auto;">
+    <div style="padding: 40px; max-width: 1200px; margin: 0 auto;">
+      
+      <div class="main-header-row">
+        <h1 style="font-size: 28px; font-weight: 800; color: #fff;">Reports</h1>
+        <button class="btn-export" onclick="downloadPDF()"><i data-lucide="download"></i> Export Report</button>
+      </div>
+
+      <!-- Weekly Performance Header -->
+      <div style="display: flex; align-items: baseline; margin-bottom: 24px;">
+        <h2 style="font-size: 24px; font-weight: 700; color: #fff;">Weekly Performance</h2>
+        <span class="badge-period">Last 7 Days</span>
+      </div>
+
+      <!-- Top Grid: Performance Metrics -->
+      <div class="report-grid-top">
+        <div class="report-card-lg" id="weekly-uptime-card">
+          <div class="report-title-top">Uptime Percentage</div>
+          <div class="gauge-container">
+            <div class="gauge-circle">
+              <svg width="120" height="120">
+                <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+                <circle class="gauge-fill" id="weekly-uptime-gauge" cx="60" cy="60" r="50" style="stroke-dasharray: 0, 314;"></circle>
+              </svg>
+              <div class="gauge-text" id="weekly-uptime-text">100%</div>
+            </div>
+            <div>
+              <div class="metric-main" id="weekly-uptime-val">100%</div>
+              <div class="metric-sub">Across <span class="site-count">4</span> Monitors</div>
+              <div class="metric-mini"><span class="check-count">3,980</span> checks performed in last 7 days</div>
+            </div>
+          </div>
+          <div class="spark-container"><canvas id="weekly-sparkline"></canvas></div>
+        </div>
+
+        <div class="report-card-lg" id="monthly-performance-card">
+          <div class="report-title-top">Monthly Performance</div>
+          <div class="gauge-container">
+            <div class="gauge-circle">
+              <svg width="120" height="120">
+                <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+                <circle class="gauge-fill" id="monthly-uptime-gauge" cx="60" cy="60" r="50" style="stroke-dasharray: 0, 314;"></circle>
+              </svg>
+              <div class="gauge-text" id="monthly-uptime-text">100%</div>
+            </div>
+            <div>
+              <div class="metric-main" id="monthly-uptime-val">100%</div>
+              <div class="metric-sub">Across <span class="site-count">4</span> Monitors</div>
+              <div class="metric-mini"><span class="monthly-check-count">12,450</span> checks performed in last 30 days</div>
+            </div>
+          </div>
+          <div class="spark-container"><canvas id="monthly-sparkline"></canvas></div>
+        </div>
+
+        <div class="report-card-lg" id="monthly-performance-card-2">
+            <div class="report-title-top">Response Performance</div>
+            <div class="gauge-container">
+              <div class="gauge-circle">
+                <svg width="120" height="120">
+                  <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+                  <circle class="gauge-fill" id="response-performance-gauge" cx="60" cy="60" r="50" style="stroke-dasharray: 250, 314;"></circle>
+                </svg>
+                <div class="gauge-text" id="avg-response-text">926ms</div>
+              </div>
+              <div>
+                <div class="metric-main" id="avg-response-val" style="color: #fff;">926ms</div>
+                <div class="metric-sub">Across <span class="site-count">4</span> Monitors</div>
+                <div class="metric-mini"><span class="total-check-count">3,980</span> checks performed in last 7 days</div>
+              </div>
+            </div>
+            <div class="spark-container"><canvas id="response-trend-sparkline"></canvas></div>
+        </div>
+
+        <div class="report-card-lg" id="yearly-performance-card">
+            <div class="report-title-top">Yearly Performance</div>
+            <div class="gauge-container">
+              <div class="gauge-circle">
+                <svg width="120" height="120">
+                  <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+                  <circle class="gauge-fill" id="yearly-uptime-gauge" cx="60" cy="60" r="50" style="stroke-dasharray: 0, 314;"></circle>
+                </svg>
+                <div class="gauge-text" id="yearly-uptime-text">100%</div>
+              </div>
+              <div>
+                <div class="metric-main" id="yearly-uptime-val">100%</div>
+                <div class="metric-sub">Across <span class="site-count">4</span> Monitors</div>
+                <div class="metric-mini"><span class="yearly-check-count">145,210</span> checks performed in last 365 days</div>
+              </div>
+            </div>
+            <div class="spark-container"><canvas id="yearly-sparkline"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Summary Section -->
+      <div class="summary-section-title">
+        <span>Monitor Performance</span>
+      </div>
+
+      <div id="monitor-list-grid" class="summary-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 40px;">
+        <!-- Dynamically populated -->
+        <div class="summary-card" style="display:flex; align-items:center; justify-content:center;">
+          <div class="loader-spinner"></div>
+        </div>
+      </div>
+
+      <!-- Summary Section -->
+      <div class="summary-section-title">
+        <span>Summary</span>
+        <button class="btn-export" onclick="downloadPDF()"><i data-lucide="download"></i> Export Report</button>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Uptime %</div>
+          <div class="summary-val" id="summary-uptime">100%</div>
+          <div class="summary-meta">Across <span class="site-count">4</span> Monitors</div>
+          <div class="summary-spark"><canvas id="summary-uptime-spark"></canvas></div>
+        </div>
+        
+        <div class="summary-card">
+          <div class="summary-label">Avg Response</div>
+          <div class="summary-val" id="summary-response">926ms</div>
+          <div class="summary-meta">3,980 checks performed</div>
+          <div class="summary-spark"><canvas id="summary-response-spark"></canvas></div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Total Downtime</div>
+          <div class="summary-val" id="summary-downtime">0 Minutes</div>
+          <div class="summary-meta">1,264 checks performed</div>
+          <div class="summary-spark"><canvas id="summary-downtime-spark"></canvas></div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Total Incidents</div>
+          <div class="summary-val" id="summary-incidents">0 Incidents</div>
+          <div class="summary-meta">1773 checks performed</div>
+          <div class="summary-spark"><canvas id="summary-incidents-spark"></canvas></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/reports.js"></script>
+<script src="/static/js/toast.js"></script>
+<script>
+  lucide.createIcons();
+  
+  // Background Effects Logic
+  (function(){
+    const c=document.getElementById('particles-canvas'),ctx=c.getContext('2d');
+    let W,H;
+    const r=()=>{W=c.width=innerWidth;H=c.height=innerHeight;};
+    window.addEventListener('resize',r);r();
+    const cols=['rgba(29,78,216,','rgba(6,182,212,','rgba(124,58,237,','rgba(16,185,129,'];
+    const pts=Array.from({length:40},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,rx:(Math.random()-.5)*.2,ry:(Math.random()-.5)*.2,rad:Math.random()*1.2+.3,a:Math.random()*.3+.05,c:cols[Math.floor(Math.random()*cols.length)]}));
+    (function f(){
+      ctx.clearRect(0,0,W,H);
+      pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.rad,0,Math.PI*2);ctx.fillStyle=p.c+p.a+')';ctx.fill();p.x+=p.rx;p.y+=p.ry;if(p.x<0||p.x>W)p.rx*=-1;if(p.y<0||p.y>H)p.ry*=-1;});
+      requestAnimationFrame(f);
+    })();
+  })();
+
+
+</script>
+</body>
+</html>

@@ -8,6 +8,8 @@ from backend.database import Base
 class UserRole(str, enum.Enum):
     ADMIN = "admin"
     USER = "user"
+    ADMIN_UPPER = "ADMIN"
+    USER_UPPER = "USER"
 
 
 class User(Base):

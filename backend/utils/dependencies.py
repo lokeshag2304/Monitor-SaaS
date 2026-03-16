@@ -28,7 +28,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return user
 
 def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role.value != "admin":
+    role_val = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
+    if role_val != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions. Admin access required."

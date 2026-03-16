@@ -9,6 +9,12 @@ class WebsiteStatus(str, enum.Enum):
     DOWN = "down"
     UNKNOWN = "unknown"
     ERROR = "error"
+    ACTIVE = "active"
+    ACTIVE_UPPER = "ACTIVE"
+    UP_UPPER = "UP"
+    DOWN_UPPER = "DOWN"
+    PAUSED = "paused"
+    PENDING = "pending"
 
 class Website(Base):
     __tablename__ = "websites"

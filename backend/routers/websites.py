@@ -17,7 +17,9 @@ def list_websites(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.role.value == "admin":
+    user_role = str(current_user.role.value) if hasattr(current_user.role, 'value') else str(current_user.role)
+    
+    if user_role == "admin":
         websites = db.query(Website).all()
     else:
         websites = db.query(Website).filter(Website.owner_id == current_user.id).all()
@@ -32,14 +34,19 @@ def list_websites(
         history_data = [{"is_up": log.is_up, "response_time": log.response_time} for log in reversed(logs)]
         
         # Convert SQLAlchemy model to Pydantic model manually to attach history
-        site_dict = WebsiteResponse.from_orm(site)
-        site_dict.history = history_data
-        
-        # Attach creator name for admin clustering dashboard
-        if current_user.role.value == "admin" and site.owner:
-            site_dict.owner_name = site.owner.name
+        try:
+            # Use dict() for safer manipulation if from_orm has issues with extra fields
+            site_dict = WebsiteResponse.from_orm(site)
+            site_dict.history = history_data
+            
+            # Attach creator name for admin clustering dashboard
+            if user_role == "admin" and hasattr(site, 'owner') and site.owner:
+                site_dict.owner_name = getattr(site.owner, 'name', 'System Admin')
 
-        results.append(site_dict)
+            results.append(site_dict)
+        except Exception as e:
+            print(f"Error processing site {site.id}: {e}")
+            continue
         
     return results
 

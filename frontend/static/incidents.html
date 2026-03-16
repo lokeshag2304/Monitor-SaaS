@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MoniFy-Ping — Incidents</title>
   <meta name="description" content="View all monitoring incidents and outage history on MoniFy-Ping.">
-  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="css/custom.css">
+  <link rel="stylesheet" href="/static/css/custom.css">
   <style>
     .incidents-table {
       width: 100%; border-collapse: separate; border-spacing: 0 6px;
@@ -76,17 +76,7 @@
 
 <div class="app-shell">
 
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-icon"><img src="logo.jpg" alt="MoniFy"></div>
-      <span class="sidebar-logo-text">MoniFy-Ping</span>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="dashboard.html" class="nav-item"><i data-lucide="activity"></i> Monitors</a>
-      <a href="incidents.html" class="nav-item active"><i data-lucide="alert-circle"></i> Incidents</a>
-      <a href="#" class="nav-item"><i data-lucide="wifi"></i> Status Pages</a>
-    </nav>
-  </aside>
+  <div id="sidebar-container"></div>
 
   <main class="main-content">
     
@@ -164,13 +154,17 @@
   </main>
 </div>
 
-<script src="js/toast.js"></script>
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/toast.js"></script>
 <script>
+(function() {
   lucide.createIcons();
 
-  const API_URL = "http://127.0.0.1:8000";
-  const token = localStorage.getItem('token');
-  if (!token) window.location.href = 'index.html';
+  const API_URL = window.API_URL || window.location.origin;
+  const token = window.token || localStorage.getItem('token');
+  if (!token) window.location.href = '/';
 
   let allIncidents = [];
 
@@ -295,6 +289,12 @@
   }
 
   loadIncidents();
+
+  // Exposure
+  window.filterTable = filterTable;
+  window.loadIncidents = loadIncidents;
+
+})();
 </script>
 </body>
 </html>

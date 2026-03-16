@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MoniFy-Ping — Edit Monitor</title>
-  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="css/custom.css">
+  <link rel="stylesheet" href="/static/css/custom.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .form-group { margin-bottom: 20px; }
@@ -56,17 +56,7 @@
 
 <div class="app-shell">
 
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-icon"><img src="logo.jpg" alt="MoniFy"></div>
-      <span class="sidebar-logo-text">MoniFy-Ping</span>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="dashboard.html" class="nav-item active"><i data-lucide="activity"></i> Monitors</a>
-      <a href="#" class="nav-item"><i data-lucide="alert-circle"></i> Incidents</a>
-      <a href="#" class="nav-item"><i data-lucide="wifi"></i> Status pages</a>
-    </nav>
-  </aside>
+  <div id="sidebar-container"></div>
 
   <main class="main-content">
     
@@ -182,27 +172,31 @@
   </main>
 </div>
 
-<script src="js/toast.js"></script>
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/toast.js"></script>
 <script>
+(function() {
   lucide.createIcons();
   
-  const API_URL = "http://127.0.0.1:8000";
-  const token = localStorage.getItem('token');
+  const API_URL = window.API_URL || window.location.origin;
+  const token = window.token || localStorage.getItem('token');
   
-  if (!token) window.location.href = 'index.html';
+  if (!token) window.location.href = '/';
 
   function getMonitorId() {
     const params = new URLSearchParams(window.location.search);
     if (params.has('id')) return params.get('id');
-    const parts = window.location.pathname.split('/');
-    return parts[parts.length - 2] === 'monitor' ? parts[parts.length - 1] : null; 
+    const match = window.location.pathname.match(/\/monitors\/(\d+)/);
+    return match ? match[1] : null;
   }
 
   const mId = getMonitorId();
 
   function goBack() {
-    if(mId) window.location.href = `monitor.html?id=${mId}`;
-    else window.location.href = 'dashboard.html';
+    if(mId) window.location.href = `/monitors/${mId}`;
+    else window.location.href = '/dashboard.html';
   }
 
   async function loadData() {
@@ -289,6 +283,14 @@
     }
   }
 
+  // Exposure
+  window.saveMonitor = saveMonitor;
+  window.loadData = loadData;
+  window.goBack = goBack;
+
+})();
+
 </script>
+
 </body>
 </html>

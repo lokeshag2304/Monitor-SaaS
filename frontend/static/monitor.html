@@ -4,13 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MoniFy-Ping — Monitor Details</title>
-  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Main shared CSS and unique monitor CSS overrides -->
-  <link rel="stylesheet" href="css/custom.css">
+  <link rel="stylesheet" href="/static/css/custom.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -20,7 +19,6 @@
     }}}}
   </script>
   <style>
-    /* Monitor detail specific overrides */
     .detail-card {
       background: rgba(8, 14, 30, 0.75);
       border: 1px solid rgba(255, 255, 255, 0.07);
@@ -32,21 +30,23 @@
       content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
       background: linear-gradient(90deg, transparent, rgba(34,197,94,0.3), transparent);
     }
-    
     .uptime-bar-lg { display: flex; gap: 2px; height: 20px; border-radius: 4px; overflow: hidden; margin-top: 6px; }
     .uptime-seg-lg { flex: 1; transition: opacity .2s; border-radius: 2px; }
-    
     .back-nav { display: inline-flex; align-items: center; gap: 6px; color: #8aafc8; font-size: 13px; text-decoration: none; margin-bottom: 20px; font-weight: 500; transition: color 0.2s; }
     .back-nav:hover { color: #fff; }
-    
     .header-card { padding: 24px; display: flex; justify-content: space-between; align-items: center; border-radius: 16px; background: linear-gradient(145deg, rgba(8,14,30,0.95), rgba(5,10,24,0.98)); box-shadow: 0 10px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); }
     .header-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 20px; color: #fff; margin-right: 16px; }
-    
     .chart-container { width: 100%; height: 220px; margin-top: 15px; }
-    
     .incident-item { border-left: 3px solid #ef4444; background: rgba(239, 68, 68, 0.05); padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 8px;}
-    
     .map-placeholder { width: 100%; border-radius: 8px; opacity: 0.6; mix-blend-mode: screen; filter: hue-rotate(180deg) brightness(1.2); }
+    .report-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(6,11,24,0.9); backdrop-filter:blur(8px); padding:40px; overflow-y:auto; justify-content:center; }
+    .report-modal.active { display:flex; }
+    .report-modal-content { max-width:800px; width:100%; position:relative; }
+    .report-card-lg { background:rgba(8,14,30,0.8); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:24px; margin-bottom:20px; }
+    .gauge-circle { position: relative; width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; }
+    .gauge-fill { position: absolute; inset:0; border-radius:50%; background: conic-gradient(var(--gauge-color) var(--gauge-percent), transparent 0); mask: radial-gradient(transparent 65%, black 66%); }
+    .gauge-text { position:relative; font-size:18px; font-weight:800; color:#fff; }
+    .sla-badge { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; background:rgba(34,197,94,0.1); color:#22c55e; border:1px solid rgba(34,197,94,0.2); }
   </style>
 </head>
 <body>
@@ -56,58 +56,41 @@
 <canvas id="particles-canvas"></canvas>
 
 <div class="app-shell">
+  <div id="sidebar-container"></div>
 
-  <!-- ═══════════════ SIDEBAR ═══════════════ -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-icon"><img src="logo.jpg" alt="MoniFy"></div>
-      <span class="sidebar-logo-text">MoniFy-Ping</span>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="dashboard.html" class="nav-item active"><i data-lucide="activity"></i> Monitors</a>
-      <a href="#" class="nav-item"><i data-lucide="alert-circle"></i> Incidents</a>
-      <a href="#" class="nav-item"><i data-lucide="wifi"></i> Status pages</a>
-    </nav>
-  </aside>
-
-  <!-- ═══════════════ MAIN ═══════════════ -->
   <main class="main-content">
-    
     <header class="top-header">
       <div class="header-left">
         <h1 class="header-title">Monitors</h1>
       </div>
       <div class="header-right">
-        <button class="btn btn-glass" onclick="window.location.href='dashboard.html'" style="margin-right: 12px;"><i data-lucide="arrow-left"></i> Back</button>
-        <button class="btn btn-glass" style="margin-right: 12px;"><i data-lucide="upload"></i> Bulk Import</button>
-        <button class="btn btn-primary"><i data-lucide="plus"></i> Create new</button>
+        <button class="btn btn-glass" onclick="window.location.href='/dashboard.html'" style="margin-right: 12px;"><i data-lucide="arrow-left"></i> Back</button>
+        <button class="btn btn-glass" onclick="openMonitorReport()" style="margin-right: 12px;"><i data-lucide="bar-chart-2"></i> View Report</button>
+        <button class="btn btn-primary" onclick="toggleModal('add-modal')"><i data-lucide="plus"></i> Create new</button>
       </div>
     </header>
 
     <div class="content-body" style="overflow-y: auto;">
       <div style="display:flex; padding: 26px; gap: 24px; min-height: 100%; width: 100%; flex-wrap: wrap;">
-        
-        <!-- Left Main Area -->
         <div style="flex: 1; min-width: 600px; display: flex; flex-direction: column; gap: 16px;">
-          
-          <!-- Header Card Section -->
           <div class="header-card">
             <div style="display:flex; align-items:center;">
               <div class="header-icon"><i data-lucide="globe"></i></div>
               <div>
                 <h1 id="det-name" style="font-size:24px; font-weight:800; color:#fff; display:flex; gap:10px; align-items:center;">Loading...</h1>
-                <p id="det-url" style="font-size:13px; color:#8aafc8; margin-top:2px;">HTTPS monitor for...</p>
+                <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
+                  <p id="det-url" style="font-size:13px; color:#8aafc8; margin:0;">HTTPS monitor for...</p>
+                  <span id="det-sla-badge" class="sla-badge" style="display:none;">Tier: Excellent</span>
+                </div>
               </div>
             </div>
             <div style="display:flex; gap:8px;">
               <button class="btn btn-glass" id="btn-test-notif" onclick="sendTestNotification()"><i data-lucide="bell"></i> Test Notification</button>
               <button class="btn btn-glass"><i data-lucide="pause"></i> Pause</button>
-              <button class="btn btn-glass" onclick="window.location.href='edit_monitor.html?id=' + getMonitorId()"><i data-lucide="settings"></i> Edit</button>
-              <button class="btn btn-glass" style="padding: 0 10px;"><i data-lucide="more-vertical" style="width: 16px;"></i></button>
+              <button class="btn btn-glass" onclick="window.location.href='/monitors/' + getMonitorId() + '/edit'"><i data-lucide="settings"></i> Edit</button>
             </div>
           </div>
 
-          <!-- Cards Row -->
           <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
             <div class="detail-card">
               <h3 style="font-size:11px; color:#8aafc8; font-weight:600; text-transform:uppercase; margin-bottom:12px;">Current status</h3>
@@ -132,7 +115,6 @@
             </div>
           </div>
 
-          <!-- Uptime History Bars -->
           <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
             <div class="detail-card">
               <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
@@ -145,7 +127,7 @@
             <div class="detail-card">
               <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                 <h3 style="font-size:12px; color:#fff; font-weight:700;">Last 7 Days</h3>
-                <span style="font-size:12px; color:#22c55e; font-weight:700;">100%</span>
+                <span id="pct-7d" style="font-size:12px; color:#22c55e; font-weight:700;">100%</span>
               </div>
               <div class="uptime-bar-lg" id="bar-7d"></div>
               <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:10px; color:#4d6a80;"><span>7d ago</span><span>Now</span></div>
@@ -153,19 +135,18 @@
             <div class="detail-card">
               <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                 <h3 style="font-size:12px; color:#fff; font-weight:700;">Last 30 Days</h3>
-                <span style="font-size:12px; color:#22c55e; font-weight:700;">100%</span>
+                <span id="pct-30d" style="font-size:12px; color:#22c55e; font-weight:700;">100%</span>
               </div>
               <div class="uptime-bar-lg" id="bar-30d"></div>
               <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:10px; color:#4d6a80;"><span>30d ago</span><span>Now</span></div>
             </div>
           </div>
 
-          <!-- Response Time Graph -->
           <div class="detail-card" style="padding-bottom:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <h3 style="font-size:14px; color:#fff; font-weight:700;">Response Time</h3>
               <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-size:11px; color:#22c55e; display:flex; align-items:center; gap:4px; cursor:pointer;"><i data-lucide="bell-ring" style="width:12px;"></i> Set up alerts</span> <span style="font-size:11px; color:#8aafc8;">for slow response times.</span>
+                <span style="font-size:11px; color:#22c55e; display:flex; align-items:center; gap:4px; cursor:pointer;"><i data-lucide="bell-ring" style="width:12px;"></i> Set up alerts</span>
                 <i data-lucide="more-horizontal" style="width:14px; color:#8aafc8; cursor:pointer; margin-left:8px;"></i>
               </div>
             </div>
@@ -173,80 +154,62 @@
               <canvas id="rtChart"></canvas>
             </div>
             <div style="display:flex; justify-content:space-between; margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.05);">
-              <div>
-                <div style="display:flex; align-items:center; gap:6px; font-size:18px; font-weight:700; color:#fff;"><i data-lucide="activity" style="width:16px; color:#06b6d4;"></i> <span id="stat-avg">0</span> ms</div>
-                <div style="font-size:11px; color:#8aafc8; margin-top:2px;">Average</div>
-              </div>
-              <div>
-                <div style="display:flex; align-items:center; gap:6px; font-size:18px; font-weight:700; color:#fff;"><i data-lucide="arrow-down-right" style="width:16px; color:#22c55e;"></i> <span id="stat-min">0</span> ms</div>
-                <div style="font-size:11px; color:#8aafc8; margin-top:2px;">Minimum</div>
-              </div>
-              <div>
-                <div style="display:flex; align-items:center; gap:6px; font-size:18px; font-weight:700; color:#fff;"><i data-lucide="arrow-up-right" style="width:16px; color:#ef4444;"></i> <span id="stat-max">0</span> ms</div>
-                <div style="font-size:11px; color:#8aafc8; margin-top:2px;">Maximum</div>
-              </div>
+              <div><div style="display:flex; align-items:center; gap:6px; font-size:18px; font-weight:700; color:#fff;"><i data-lucide="activity" style="width:16px; color:#06b6d4;"></i> <span id="stat-avg">0</span> ms</div><div style="font-size:11px; color:#8aafc8; margin-top:2px;">Average</div></div>
+              <div><div style="display:flex; align-items:center; gap:6px; font-size:18px; font-weight:700; color:#fff;"><i data-lucide="arrow-down-right" style="width:16px; color:#22c55e;"></i> <span id="stat-min">0</span> ms</div><div style="font-size:11px; color:#8aafc8; margin-top:2px;">Minimum</div></div>
+              <div><div style="display:flex; align-items:center; gap:6px; font-size:18px; font-weight:700; color:#fff;"><i data-lucide="arrow-up-right" style="width:16px; color:#ef4444;"></i> <span id="stat-max">0</span> ms</div><div style="font-size:11px; color:#8aafc8; margin-top:2px;">Maximum</div></div>
             </div>
           </div>
 
-          <!-- Incidents List -->
           <div class="detail-card">
             <h3 style="font-size:13px; color:#fff; font-weight:700; margin-bottom:16px;">Latest Incidents</h3>
             <div id="incidents-container">
               <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); text-align:center; padding:24px; border-radius:12px;">
                 <p style="color:#eab308; font-weight:700; font-size:15px; display:flex; justify-content:center; align-items:center; gap:8px;"><i data-lucide="shield-check"></i> Good job, no incidents.</p>
-                <p style="color:#4d6a80; font-size:12px; margin-top:4px;">No incidents recorded for this monitor. Keep it up!</p>
               </div>
             </div>
           </div>
-
         </div>
 
-        <!-- Right Side Panel -->
         <div style="width: 280px; display: flex; flex-direction: column; gap: 16px;">
-          
           <div class="detail-card">
             <h3 style="font-size:13px; color:#fff; font-weight:700; margin-bottom:12px;">Domain & SSL</h3>
             <p style="font-size:11px; color:#4d6a80; margin-bottom:4px;">SSL certificate valid until</p>
             <p style="font-size:13px; color:#22c55e; font-weight:600; margin-bottom:16px; background:rgba(34,197,94,0.1); display:inline-block; padding:2px 8px; border-radius:4px;">Dec 25, 2026</p>
-            <div style="height:1px; background:rgba(255,255,255,0.05); margin-bottom:12px;"></div>
-            <p style="font-size:11px; color:#4d6a80; margin-bottom:4px;">Domain Registrar</p>
-            <p style="font-size:12px; color:#fff;">Cloudflare, Inc.</p>
           </div>
-
           <div class="detail-card">
             <h3 style="font-size:13px; color:#fff; font-weight:700; margin-bottom:12px;">Regions</h3>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg" class="map-placeholder" alt="World Map">
-            <div style="margin-top:12px;">
-              <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:12px;">
-                <span style="color:#fff; display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; background:#22c55e; border-radius:50%; box-shadow:0 0 8px #22c55e;"></span> North America</span>
-                <span style="color:#8aafc8;">Checking</span>
-              </div>
-              <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:12px;">
-                <span style="color:#fff; display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; background:#22c55e; border-radius:50%; box-shadow:0 0 8px #22c55e;"></span> Europe</span>
-                <span style="color:#8aafc8;">Checking</span>
-              </div>
-              <div style="display:flex; justify-content:space-between; font-size:12px;">
-                <span style="color:#fff; display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; background:#22c55e; border-radius:50%; box-shadow:0 0 8px #22c55e;"></span> Asia Pacific</span>
-                <span style="color:#8aafc8;">Checking</span>
-              </div>
-            </div>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg" class="map-placeholder" alt="Map">
           </div>
-
           <div class="detail-card">
             <h3 style="font-size:13px; color:#fff; font-weight:700; margin-bottom:12px;">To Be Notified</h3>
-            <p style="font-size:12px; color:#4d6a80; line-height:1.5;">Alerts will be sent to the default account owner email address upon DOWN/UP status changes.</p>
+            <p style="font-size:12px; color:#4d6a80;">Alerts sent to account owner email address.</p>
           </div>
-          
         </div>
-
       </div>
     </div>
   </main>
+</div>
 
+<div id="monitor-report-modal" class="report-modal">
+  <div class="report-modal-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h2 id="modal-report-title" style="font-size:24px; font-weight:700; color:#fff;">Monitor Report</h2>
+      <button onclick="closeMonitorReport()" style="background:none; border:none; color:#8aafc8; cursor:pointer;"><i data-lucide="x"></i></button>
+    </div>
+    <div class="report-card-lg">
+      <div style="display:flex; align-items:center; gap:30px;">
+        <div class="gauge-circle"><div class="gauge-fill" id="modal-gauge"></div><div class="gauge-text" id="modal-gauge-text">100%</div></div>
+        <div><div style="font-size:32px; font-weight:800; color:#22c55e;" id="modal-uptime-val">100%</div><span class="sla-badge" id="modal-sla-badge">Tier: Excellent</span></div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px;">
+        <div class="report-card-lg"><div style="font-size:11px; font-weight:700; color:#4d6a80; text-transform:uppercase;">Avg Response</div><div id="modal-avg-resp" style="font-size:28px; font-weight:800; color:#fff;">0ms</div></div>
+        <div class="report-card-lg"><div style="font-size:11px; font-weight:700; color:#4d6a80; text-transform:uppercase;">Incidents</div><div id="modal-total-inc" style="font-size:28px; font-weight:800; color:#fff;">0</div></div>
+    </div>
+  </div>
 </div>
 
 <script>
-lucide.createIcons();
 (function(){
   const c=document.getElementById('particles-canvas'),ctx=c.getContext('2d');
   let W,H;
@@ -265,8 +228,10 @@ lucide.createIcons();
   })();
 })();
 </script>
-<script src="js/toast.js"></script>
-<script src="js/monitor.js"></script>
-
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/monitor.js"></script>
+<script src="/static/js/toast.js"></script>
 </body>
 </html>

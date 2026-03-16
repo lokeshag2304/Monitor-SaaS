@@ -16,7 +16,7 @@ class Incident(Base):
     duration_seconds = Column(Float, nullable=True)
     duration = Column(Float, nullable=True) # Keeping old column for compat
     reason = Column(String(500), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
         return f"<Incident(monitor={self.monitor_id}, new_status={self.new_status}, started={self.started_at})>"
+

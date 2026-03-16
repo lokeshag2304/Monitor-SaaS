@@ -128,8 +128,7 @@ async def process_monitoring_check(db: Session):
                     previous_status=site.status.value,
                     new_status=new_status.value,
                     started_at=now,
-                    reason=result.get("error") or f"Status Code: {result.get('status_code')}",
-                    created_at=now
+                    reason=result.get("error") or f"Status Code: {result.get('status_code')}"
                 )
                 db.add(new_incident)
             elif new_status == WebsiteStatus.UP:
