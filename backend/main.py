@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+from pathlib import Path
 
 from backend.database import init_db
 from backend.routers import auth, websites, pagespeed, notifications, admin, monitors, reports, incidents, user # ADDED NEW ROUTERS
@@ -33,104 +34,76 @@ app.include_router(incidents.router) # INCIDENTS ROUTER
 app.include_router(user.router) # USER ROUTER
 
 # ── FRONTEND INTEGRATION ───────────────────────────────────────────────────
-# Calculate base directory (abspath handles different ways of running the script)
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-frontend_dir = os.path.join(base_dir, "frontend")
+base_dir = Path(__file__).resolve().parent.parent
+frontend_dir = base_dir / "frontend"
 
 # Mount Static Assets (/static/css, /static/js, etc.)
-if os.path.exists(os.path.join(frontend_dir, "static")):
-    app.mount("/static", StaticFiles(directory=os.path.join(frontend_dir, "static")), name="static")
+if (frontend_dir / "static").exists():
+    app.mount("/static", StaticFiles(directory=str(frontend_dir / "static")), name="static")
+
+# Helper to serve HTML files
+def serve_html(filename: str, use_static=True):
+    path = frontend_dir / "static" / filename if use_static else frontend_dir / filename
+    if not path.exists() and use_static: # Try root if static fails
+        path = frontend_dir / filename
+    if path.exists():
+        return FileResponse(str(path))
+    return FileResponse(str(frontend_dir / "index.html")) # Fallback
 
 @app.get("/monitors/{id}", tags=["Pages"])
 def serve_monitor_page(id: int):
-    path = os.path.join(frontend_dir, "static", "monitor.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("monitor.html")
 
 @app.get("/monitors/{id}/edit", tags=["Pages"])
 def serve_edit_monitor_page(id: int):
-    path = os.path.join(frontend_dir, "static", "edit_monitor.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("edit_monitor.html")
 
 @app.get("/incidents", tags=["Pages"])
 @app.get("/incidents.html", tags=["Pages"])
 def serve_incidents_page():
-    path = os.path.join(frontend_dir, "static", "incidents.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("incidents.html")
 
 @app.get("/reports", tags=["Pages"])
 @app.get("/reports.html", tags=["Pages"])
 def serve_reports_page():
-    path = os.path.join(frontend_dir, "static", "reports.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("reports.html")
 
 @app.get("/pagespeed", tags=["Pages"])
 @app.get("/pagespeed.html", tags=["Pages"])
 def serve_pagespeed_page():
-    path = os.path.join(frontend_dir, "static", "pagespeed.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("pagespeed.html")
 
 @app.get("/register.html", tags=["Pages"])
 def serve_register_page():
-    path = os.path.join(frontend_dir, "register.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("register.html", use_static=False)
 
 @app.get("/dashboard", tags=["Pages"])
 @app.get("/dashboard.html", tags=["Pages"])
-def serve_dashboard_html_page():
-    path = os.path.join(frontend_dir, "static", "dashboard.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+def serve_dashboard_page():
+    return serve_html("dashboard.html")
 
 @app.get("/monitoring", tags=["Pages"])
 @app.get("/monitoring.html", tags=["Pages"])
 def serve_monitoring_page():
-    path = os.path.join(frontend_dir, "static", "monitoring.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("monitoring.html")
 
 @app.get("/status-pages", tags=["Pages"])
 def serve_status_pages():
-    path = os.path.join(frontend_dir, "static", "status_pages.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("status_pages.html")
 
 @app.get("/integrations", tags=["Pages"])
 def serve_integrations_page():
-    path = os.path.join(frontend_dir, "static", "integrations.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("integrations.html")
 
 @app.get("/settings", tags=["Pages"])
 @app.get("/settings.html", tags=["Pages"])
 def serve_settings_page():
-    path = os.path.join(frontend_dir, "static", "settings.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("settings.html")
 
 @app.get("/support", tags=["Pages"])
 @app.get("/support.html", tags=["Pages"])
 def serve_support_page():
-    path = os.path.join(frontend_dir, "static", "support.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("support.html")
 
 @app.get("/api/status-pages", tags=["API"])
 def get_status_pages():
@@ -142,15 +115,17 @@ def get_integrations():
 
 @app.get("/index.html", tags=["Pages"])
 def serve_index_html_page():
-    path = os.path.join(frontend_dir, "index.html")
-    if os.path.exists(path):
-        return FileResponse(path)
-    return {"error": "Page not found"}
+    return serve_html("index.html", use_static=False)
+
+# Final Fallback: Serve any static file from frontend root
+# (Like app.use(express.static("public")))
+app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend_root")
 
 @app.on_event("startup")
 async def startup_event():
     print("=" * 60)
-    print(">>> Starting MoniFy-Ping...")
+    print(f">>> Starting MoniFy-Ping at {base_dir}")
+    print(f">>> Frontend: {frontend_dir}")
     init_db()
     start_scheduler()
     print("[+] Scheduler & DB Ready")
