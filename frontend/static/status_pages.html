@@ -3,101 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MoniFy - Status Pages</title>
-  <link rel="stylesheet" href="/static/css/custom.css">
+  <title>Status Pages - MoniFy-Ping</title>
+  <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    .status-page-card {
-        background: rgba(8, 14, 30, 0.75);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 12px;
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/custom.css">
+  <link rel="stylesheet" href="/static/css/dashboard_premium.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
+          colors: {
+            bg: '#070b14', border: 'rgba(255,255,255,0.05)', primary: '#3b82f6'
+          }
+        }
+      }
     }
-    .sp-actions { display: flex; gap: 8px; }
-    
-    /* Simple Modal */
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto;}
-    .modal.active { display: flex; align-items: flex-start; padding: 40px 0; }
-    .modal-content { background: #0f172a; border-radius: 16px; padding: 32px; width: 600px; border: 1px solid rgba(255,255,255,0.1); margin:auto; }
-
-    .group-builder { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 8px; margin-bottom: 12px; }
-  </style>
+  </script>
 </head>
-<body>
+<body class="bg-bg text-gray-300">
 
-<div class="app-shell">
-  <div id="sidebar-container"></div>
+<div class="app-shell flex h-screen overflow-hidden">
   
-  <div class="main-content">
-    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 32px; padding: 24px;">
-      <div>
-        <h1 style="font-size:32px; font-weight:900; color:#fff;">Status Pages</h1>
-        <p style="color:var(--text-dim);">Publish public system health dashboards.</p>
+  <!-- Sidebar Inject -->
+  <div id="sidebar-container" class="flex-shrink-0"></div>
+
+  <!-- Main Area -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    
+    <!-- Top Navbar -->
+    <header class="top-header flex items-center justify-between z-10">
+      <div class="flex items-center gap-4">
+        <h1 class="header-title font-bold text-white text-2xl">Status Pages</h1>
+        <span id="admin-badge" class="badge-admin py-1 px-3 rounded-full text-[10px] font-bold tracking-widest uppercase">SUPER ADMIN</span>
       </div>
-      <button class="btn-primary" onclick="openCreateModal()">
-          <i data-lucide="plus"></i> Create Status Page
-      </button>
+      <div class="flex items-center gap-4">
+        <button id="theme-toggle" class="theme-btn w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5" title="Toggle theme">
+          <i id="theme-toggle-dark-icon" data-lucide="moon" class="w-4 h-4"></i>
+          <i id="theme-toggle-light-icon" data-lucide="sun" class="w-4 h-4" style="color:#eab308;display:none;"></i>
+        </button>
+        <button onclick="openCreateModal()" class="btn-primary flex items-center gap-2 text-white px-6">
+          <i data-lucide="plus" class="w-4 h-4"></i> Create New Page
+        </button>
+      </div>
     </header>
 
-    <div style="padding: 24px;">
-        <div id="pages-list">
-            <!-- Rendered by JS -->
-            <p style="color: grey;">Loading...</p>
+    <!-- Content Area Scrollable -->
+    <div class="flex-1 overflow-y-auto p-8 relative">
+      
+      <!-- Ambient Lights -->
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 -z-10"></div>
+      
+      <div class="max-w-[1200px] mx-auto">
+        <div class="space-y-8">
+          
+          <!-- Intro Section -->
+          <div class="premium-panel p-8">
+            <h2 class="text-xl font-bold text-white mb-2">Publish Public Dashboards</h2>
+            <p class="text-gray-500 font-medium">Create beautiful status pages to keep your customers informed about system health.</p>
+          </div>
+
+          <!-- Pages List -->
+          <div id="pages-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Rendered by JS -->
+              <div class="col-span-full py-20 text-center">
+                  <div class="animate-spin inline-block mb-4">
+                      <i data-lucide="loader" class="text-primary w-8 h-8"></i>
+                  </div>
+                  <p class="text-gray-500">Retrieving status pages...</p>
+              </div>
+          </div>
+
         </div>
+      </div>
     </div>
-  </div>
+
+  </main>
 </div>
 
-<!-- Create Modal -->
-<div class="modal" id="create-modal">
-    <div class="modal-content">
-        <div style="display:flex; justify-content:space-between; margin-bottom: 24px;">
-            <h2 style="color:#fff; font-size:20px; font-weight:bold;">New Status Page</h2>
-            <i data-lucide="x" style="cursor:pointer; color:#888;" onclick="closeCreateModal()"></i>
+<!-- Create Modal (Premium Style) -->
+<div class="modal" id="create-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:flex-start; justify-content:center; padding:40px 0; overflow-y:auto; backdrop-filter:blur(10px);">
+    <div class="premium-panel p-8 w-[600px] shadow-2xl animate-slide-up">
+        <div class="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i data-lucide="plus-circle" class="text-primary w-5 h-5"></i> New Status Page
+            </h2>
+            <button onclick="closeCreateModal()" class="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all text-gray-500 hover:text-white">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
         </div>
 
-        <form id="create-sp-form">
-            <div class="form-group">
-                <label class="form-label">Page Name</label>
-                <input type="text" class="form-input" id="sp-name" required placeholder="e.g. MoniFy Status">
+        <form id="create-sp-form" class="space-y-6">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Page Name</label>
+                <input type="text" id="sp-name" required placeholder="e.g. MoniFy Status" class="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-primary outline-none transition-all placeholder:text-gray-700">
             </div>
-            <div class="form-group">
-                <label class="form-label">Slug URL</label>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="color:grey; font-size:14px;">/status/</span>
-                    <input type="text" class="form-input" id="sp-slug" required placeholder="monify">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Slug URL</label>
+                <div class="flex items-center bg-white/5 border border-white/5 rounded-xl px-4 py-3 group focus-within:border-primary transition-all">
+                    <span class="text-gray-600 font-bold mr-2">/status/</span>
+                    <input type="text" id="sp-slug" required placeholder="monify" class="flex-1 bg-transparent border-none text-white outline-none">
                 </div>
             </div>
             
-            <div class="form-group">
-                <label class="form-label">Custom Message (Optional)</label>
-                <textarea class="form-input" id="sp-msg" rows="3" placeholder="Welcome to our status page..."></textarea>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Announcement Message</label>
+                <textarea id="sp-msg" rows="3" placeholder="All systems operational..." class="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-primary outline-none transition-all placeholder:text-gray-700"></textarea>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Logo (Optional)</label>
-                <input type="file" id="sp-logo" class="form-input" accept="image/*">
+            <div class="flex items-center justify-between border-t border-white/5 pt-6 mt-6">
+                <h3 class="text-sm font-bold text-white uppercase tracking-widest">Monitor Groups</h3>
+                <button type="button" class="btn-glass text-xs py-2" onclick="addGroup()">+ Add Group</button>
             </div>
 
-            <div style="margin-top:24px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="color:#fff; font-weight:bold;">Monitor Groups</h3>
-                <button type="button" class="btn-primary" style="padding:6px 12px; font-size:12px;" onclick="addGroup()">+ Add Group</button>
-            </div>
+            <div id="groups-container" class="space-y-4"></div>
 
-            <div id="groups-container"></div>
-
-            <div style="margin-top: 32px; text-align:right;">
+            <div class="pt-6 border-t border-white/5 flex justify-end">
                 <button type="button" class="btn-primary" onclick="submitStatusPage()">Publish Status Page</button>
             </div>
         </form>
     </div>
 </div>
 
-<script src="/static/js/app.js"></script>
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/toast.js"></script>
 <script>
 lucide.createIcons();
 
@@ -112,7 +146,7 @@ async function init() {
 
 async function fetchMonitors() {
     try {
-        const res = await fetch(`${API_URL}/api/reports/monitors`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch(`${API_URL}/websites/`, { headers: { 'Authorization': `Bearer ${token}` } });
         if(res.ok) availableMonitors = await res.json();
     } catch(e) {}
 }
@@ -123,25 +157,43 @@ async function loadPages() {
         const res = await fetch(`${API_URL}/api/status-pages`, { headers: { 'Authorization': `Bearer ${token}` } });
         const pages = await res.json();
         if(pages.length === 0) {
-            list.innerHTML = `<div style="text-align:center; color:grey; padding:40px;">No status pages yet.</div>`;
+            list.innerHTML = `
+                <div class="col-span-full py-20 premium-panel flex flex-col items-center justify-center text-center">
+                    <div class="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6">
+                        <i data-lucide="globe" class="text-gray-600 w-10 h-10"></i>
+                    </div>
+                    <h3 class="text-white font-bold text-lg mb-2">No Status Pages Ready</h3>
+                    <p class="text-gray-500 max-w-xs mb-8">Share your system health with the world. Create your first page in seconds.</p>
+                    <button class="btn-primary" onclick="openCreateModal()">Get Started</button>
+                </div>`;
+            lucide.createIcons();
             return;
         }
 
         list.innerHTML = pages.map(p => `
-            <div class="status-page-card">
-                <div>
-                    <h3 style="color:#fff; font-size:16px; font-weight:bold; margin-bottom:4px;">${p.name}</h3>
-                    <a href="/status/${p.slug}" target="_blank" style="color:#3b82f6; font-size:12px; text-decoration:none;">/status/${p.slug}</a>
+            <div class="premium-panel p-6 flex flex-col justify-between group hover:border-primary/20 transition-all">
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                         <h3 class="text-white font-bold text-lg">${p.name}</h3>
+                         <span class="text-[10px] font-bold text-green-500/80 bg-green-500/10 px-2 py-1 rounded-md uppercase tracking-wider">Public</span>
+                    </div>
+                    <a href="/status/${p.slug}" target="_blank" class="text-primary/70 hover:text-primary text-xs font-medium flex items-center truncate">
+                       <i data-lucide="link" class="w-3 h-3 mr-2"></i> monify-ping.io/status/${p.slug}
+                    </a>
                 </div>
-                <div class="sp-actions">
-                    <button class="btn-glass" onclick="deletePage(${p.id})"><i data-lucide="trash-2" style="width:16px; color:#ef4444;"></i></button>
-                    <a href="/status/${p.slug}" target="_blank" class="btn-primary" style="text-decoration:none; padding:8px 16px;"><i data-lucide="external-link" style="width:16px;"></i> View</a>
+                <div class="flex items-center gap-3 pt-6 border-t border-white/5">
+                    <button class="btn-glass !py-2 flex-1 flex items-center justify-center gap-2 hover:!bg-red-500/10 hover:!text-red-400" onclick="deletePage(${p.id})">
+                        <i data-lucide="trash-2" class="w-4 h-4 text-red-400"></i> Delete
+                    </button>
+                    <a href="/status/${p.slug}" target="_blank" class="btn-primary !py-2 flex-1 flex items-center justify-center gap-2 text-white no-underline">
+                        <i data-lucide="external-link" class="w-4 h-4"></i> View Page
+                    </a>
                 </div>
             </div>
         `).join('');
         lucide.createIcons();
     } catch(e) {
-        list.innerText = "Error loading pages";
+        list.innerHTML = `<div class="col-span-full text-center text-red-500 font-bold p-10">Failed to load content.</div>`;
     }
 }
 
@@ -155,13 +207,13 @@ async function deletePage(id) {
 
 function openCreateModal() {
     document.getElementById('groups-container').innerHTML = '';
-    addGroup('Frontend');
-    addGroup('Backend');
-    document.getElementById('create-modal').classList.add('active');
+    addGroup('Frontend Services');
+    addGroup('Backend Services');
+    document.getElementById('create-modal').style.display = 'flex';
 }
 
 function closeCreateModal() {
-    document.getElementById('create-modal').classList.remove('active');
+    document.getElementById('create-modal').style.display = 'none';
     document.getElementById('create-sp-form').reset();
 }
 
@@ -170,23 +222,26 @@ function addGroup(defaultName="") {
     groupIndex++;
     const container = document.getElementById('groups-container');
     const div = document.createElement('div');
-    div.className = 'group-builder';
+    div.className = 'p-5 bg-white/5 border border-white/5 rounded-2xl relative group';
     div.id = `group-b-${groupIndex}`;
     
     let optionsHtml = availableMonitors.map(m => `
-        <label style="display:flex; align-items:center; gap:8px; color:#ccc; font-size:13px; margin-bottom:6px;">
-            <input type="checkbox" value="${m.id}" class="mon-sel-${groupIndex}"> ${m.name || m.url}
+        <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all cursor-pointer group">
+            <input type="checkbox" value="${m.id}" class="mon-sel-${groupIndex} w-4 h-4 rounded border-white/10 bg-white/5 text-primary focus:ring-primary/20">
+            <span class="text-sm text-gray-400 group-hover:text-white transition-colors">${m.name || m.url}</span>
         </label>
     `).join('');
 
-    if(availableMonitors.length === 0) optionsHtml = `<p style="color:grey; font-size:12px;">No monitors available.</p>`;
+    if(availableMonitors.length === 0) optionsHtml = `<p class="text-gray-600 text-xs italic">No monitors found in your account.</p>`;
 
     div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
-            <input type="text" class="form-input group-name-in" style="width:200px;" value="${defaultName}" placeholder="Group Name">
-            <i data-lucide="trash" style="color:#ef4444; cursor:pointer;" onclick="document.getElementById('group-b-${groupIndex}').remove()"></i>
+        <div class="flex justify-between items-center mb-4">
+            <input type="text" class="bg-transparent border-none text-white font-bold text-sm outline-none w-full group-name-in" value="${defaultName}" placeholder="Group Name">
+            <button type="button" onclick="document.getElementById('group-b-${groupIndex}').remove()" class="text-gray-600 hover:text-red-500 transition-colors">
+                <i data-lucide="trash" class="w-4 h-4"></i>
+            </button>
         </div>
-        <div style="padding: 8px; background: rgba(0,0,0,0.3); border-radius: 6px;">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
             ${optionsHtml}
         </div>
     `;
@@ -205,10 +260,12 @@ async function submitStatusPage() {
     if(!payload.name || !payload.slug) return alert("Name and Slug are required.");
 
     // Iterate and build groups
-    const groupsElements = document.querySelectorAll('.group-builder');
+    const groupsElements = document.querySelectorAll('.group-builder, div[id^="group-b-"]');
     payload.groups = [];
     for(let g of groupsElements) {
-        const gname = g.querySelector('.group-name-in').value;
+        const nameInput = g.querySelector('.group-name-in');
+        if(!nameInput) continue;
+        const gname = nameInput.value;
         if(!gname) continue;
         const cbSel = g.querySelectorAll('input[type="checkbox"]:checked');
         const items = Array.from(cbSel).map(cb => ({ monitor_id: parseInt(cb.value) }));
@@ -227,7 +284,7 @@ async function submitStatusPage() {
 
         // Handle File Upload if Logo exists
         const fileInput = document.getElementById('sp-logo');
-        if (fileInput.files.length > 0) {
+        if (fileInput && fileInput.files.length > 0) {
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
             await fetch(`${API_URL}/api/status-pages/${data.id}/logo`, {
@@ -245,11 +302,6 @@ async function submitStatusPage() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
-setTimeout(() => {
-    const link = document.querySelector('a[href="/status-pages"]');
-    if(link) link.classList.add('active');
-}, 500);
-
 </script>
 </body>
 </html>

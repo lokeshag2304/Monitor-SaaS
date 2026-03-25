@@ -66,20 +66,26 @@ if (!token) {
 
     window.updateSidebarProfile = function(user) {
         if (!user) return;
-        const userNameEl = document.getElementById('user-name');
-        const userRoleEl = document.getElementById('user-role');
-        const userAvatarEl = document.getElementById('user-avatar');
+        const userNameEl = document.getElementById('user-display-name');
+        const userRoleEl = document.getElementById('user-display-role');
+        const userAvatarEl = document.getElementById('user-avatar-initials');
         
-        const displayName = user.name || (user.email ? user.email.split('@')[0] : 'User');
+        const displayName = user.name || user.full_name || (user.email ? user.email.split('@')[0] : 'User');
         if (userNameEl) userNameEl.textContent = displayName;
         
         const roleText = (user.role === 'ADMIN' || user.role === 'admin') ? 'Super Admin' : 'Team Member';
         if (userRoleEl) userRoleEl.textContent = roleText;
         
         if (userAvatarEl) {
-            userAvatarEl.innerHTML = window.renderAvatar(user, 40);
-            userAvatarEl.style.background = 'transparent';
-            userAvatarEl.style.boxShadow = 'none';
+            if (user.avatar) {
+                userAvatarEl.innerHTML = `<img src="${user.avatar}" class="w-full h-full object-cover rounded-full" />`;
+                userAvatarEl.style.background = 'transparent';
+                userAvatarEl.style.boxShadow = 'none';
+            } else {
+                const initials = (user.name || user.full_name || 'U').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                userAvatarEl.innerText = initials;
+                userAvatarEl.style.background = ''; // Revert to gradient
+            }
         }
         
         localStorage.setItem('user', JSON.stringify(user));
@@ -191,17 +197,33 @@ function applyTheme(theme) {
         if (lightIcon) lightIcon.style.display = 'none';
     }
     localStorage.setItem('theme', theme);
+    // Update local user object if exists
+    if (window.currentUser) {
+        window.currentUser.theme_mode = theme;
+        localStorage.setItem('user', JSON.stringify(window.currentUser));
+    }
 }
 
-function toggleTheme() {
+async function toggleTheme() {
     const currentTheme = document.body.classList.contains('light') ? 'light' : 'dark';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     applyTheme(newTheme);
+    
+    // PERSIST TO DATABASE (FIRE AND FORGET)
+    const token = localStorage.getItem('token');
+    if (token) {
+        const formData = new FormData();
+        formData.append('theme_mode', newTheme);
+        fetch(`${API_URL}/api/update-profile`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        }).catch(err => console.error("Theme sync error:", err));
+    }
 }
 window.applyTheme = applyTheme;
-window.toggleTheme = toggleTheme; // Expose globally
+window.toggleTheme = toggleTheme; 
 
-// Attach theme toggle button event listener
 const themeToggleBtn = document.getElementById('theme-toggle');
 if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', toggleTheme);

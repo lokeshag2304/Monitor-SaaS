@@ -3,87 +3,122 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Integrations — MoniFy-Ping</title>
+  <title>Integrations - MoniFy-Ping</title>
   <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/static/css/custom.css">
-  <style>
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto;}
-    .modal.active { display: flex; align-items: flex-start; padding: 40px 0; }
-    .modal-content { background: #0f172a; border-radius: 16px; padding: 32px; width: 500px; border: 1px solid rgba(255,255,255,0.1); margin:auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-    
-    .form-group { margin-bottom: 20px; }
-    .form-label { display: block; margin-bottom: 8px; color: var(--text-dim); font-size: 14px; font-weight: 600; }
-    .form-input { width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-family: inherit; }
-    .form-input:focus { outline: none; border-color: #3b82f6; }
-    
-    .integration-card {
-        background: rgba(8, 14, 30, 0.75);
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 16px;
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+  <link rel="stylesheet" href="/static/css/dashboard_premium.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
+          colors: {
+            bg: '#070b14', border: 'rgba(255,255,255,0.05)', primary: '#3b82f6'
+          }
+        }
+      }
     }
-  </style>
+  </script>
 </head>
-<body>
+<body class="bg-bg text-gray-300">
 
-<div class="bg-orb bg-orb-1"></div>
-<div class="bg-orb bg-orb-2"></div>
+<div class="app-shell flex h-screen overflow-hidden">
+  
+  <!-- Sidebar Inject -->
+  <div id="sidebar-container" class="flex-shrink-0"></div>
 
-<div class="app-shell">
-  <div id="sidebar-container"></div>
-
-  <main class="main-content">
-    <header class="top-header" style="margin-bottom: 32px; padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-      <div>
-        <h1 style="font-size:32px; font-weight:900; color:#fff;">Integrations</h1>
-        <p style="color:var(--text-dim);">Connect MoniFy to your external tools to trigger native alerts.</p>
+  <!-- Main Area -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    
+    <!-- Top Navbar -->
+    <header class="top-header flex items-center justify-between z-10">
+      <div class="flex items-center gap-4">
+        <h1 class="header-title font-bold text-white text-2xl">Integrations</h1>
+        <span id="admin-badge" class="badge-admin py-1 px-3 rounded-full text-[10px] font-bold tracking-widest uppercase">SUPER ADMIN</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <button id="theme-toggle" class="theme-btn w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5" title="Toggle theme">
+          <i id="theme-toggle-dark-icon" data-lucide="moon" class="w-4 h-4"></i>
+          <i id="theme-toggle-light-icon" data-lucide="sun" class="w-4 h-4" style="color:#eab308;display:none;"></i>
+        </button>
       </div>
     </header>
 
-    <div style="padding: 24px;" id="integrations-list">
-        <p style="color: grey;">Loading...</p>
+    <!-- Content Area Scrollable -->
+    <div class="flex-1 overflow-y-auto p-8 relative">
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 -z-10"></div>
+      
+      <div class="max-w-[1200px] mx-auto">
+        <div class="space-y-12">
+          
+          <div class="premium-panel p-8">
+              <h2 class="text-xl font-bold text-white mb-2">Connected Platforms</h2>
+              <p class="text-gray-500 font-medium">Link your favorite communication tools to receive real-time incident reports and alerts.</p>
+          </div>
+
+          <div id="integrations-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <!-- Rendered by JS -->
+          </div>
+
+        </div>
+      </div>
     </div>
+
   </main>
 </div>
 
 <!-- Modal Container -->
-<div class="modal" id="config-modal">
-    <div class="modal-content">
-        <div style="display:flex; justify-content:space-between; margin-bottom: 24px; align-items:center;">
-            <div style="display:flex; gap:12px; align-items:center;">
-                <i id="modal-icon" style="width:24px; height:24px;"></i>
-                <h2 style="color:#fff; font-size:20px; font-weight:bold;" id="modal-title">Configure</h2>
+<div class="modal items-start py-20 px-4" id="config-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; overflow-y:auto; backdrop-filter:blur(10px);">
+    <div class="premium-panel p-8 w-full max-w-[550px] mx-auto animate-slide-up">
+        <div class="flex justify-between items-center mb-10 pb-4 border-b border-white/5">
+            <div class="flex items-center gap-4">
+                <div id="modal-icon-container" class="w-12 h-12 rounded-2xl flex items-center justify-center bg-white/5">
+                    <i id="modal-icon" class="w-6 h-6"></i>
+                </div>
+                <div>
+                   <h2 class="text-xl font-bold text-white" id="modal-title">Configure</h2>
+                   <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Integration Settings</p>
+                </div>
             </div>
-            <i data-lucide="x" style="cursor:pointer; color:#888;" onclick="closeModal()"></i>
+            <button onclick="closeModal()" class="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all text-gray-500 hover:text-white">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
         </div>
 
-        <form id="config-form">
-            <!-- Dynamic Form Content Injected Here -->
-            <div id="form-body"></div>
+        <form id="config-form" class="space-y-8">
+            <div id="form-body" class="space-y-6"></div>
             
-            <div class="form-group" style="margin-top:24px;">
-                <label style="display:flex; align-items:center; gap:8px; color:#fff; font-size:14px; cursor:pointer;">
-                    <input type="checkbox" id="int-enabled" checked> Enable this integration
+            <div class="p-6 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                <div>
+                   <span class="text-sm font-bold text-white block">Status</span>
+                   <span class="text-[10px] text-gray-500 uppercase font-black">Toggle connectivity</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="int-enabled" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
             </div>
 
-            <div style="margin-top: 32px; display:flex; justify-content:space-between;">
-                <button type="button" class="btn-glass" onclick="testIntegration()" id="test-btn">Test Alert</button>
-                <div style="display:flex; gap:12px;">
-                    <button type="button" class="btn-glass" onclick="closeModal()" style="color:#ef4444;">Cancel</button>
-                    <button type="submit" class="btn-primary" id="save-btn">Save Config</button>
-                </div>
+            <div class="flex items-center gap-4 pt-4">
+                <button type="button" class="btn-glass flex-1 !text-primary hover:!bg-primary/10" onclick="testIntegration()" id="test-btn">
+                   Test Connection
+                </button>
+                <button type="submit" class="btn-primary flex-1 text-white font-bold" id="save-btn">
+                   Apply Settings
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<script src="/static/js/app.js"></script>
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/toast.js"></script>
 <script>
 lucide.createIcons();
 
@@ -93,11 +128,11 @@ let integrationsData = [];
 let currentProvider = null;
 
 const PROVIDERS = [
-    { id: 'email', name: 'Email (SMTP)', icon: 'mail', color: '#3b82f6', desc: 'Get alerts natively via your custom SMTP server.' },
-    { id: 'slack', name: 'Slack', icon: 'message-square', color: '#22c55e', desc: 'Send customized alert messages into Slack channels via Webhooks.' },
-    { id: 'discord', name: 'Discord', icon: 'message-circle', color: '#8b5cf6', desc: 'Fire incident alerts straight into Discord server channels.' },
-    { id: 'webhook', name: 'Custom Webhook', icon: 'link', color: '#f59e0b', desc: 'Push a POST/GET alert payload directly to an external REST endpoint.' },
-    { id: 'github', name: 'GitHub Issues', icon: 'github', color: '#fff', desc: 'Automatically create GitHub Issues when a monitor goes DOWN.' }
+    { id: 'email', name: 'Email (SMTP)', icon: 'mail', color: '#3b82f6', desc: 'Enterprise-grade SMTP delivery for critical incident reports.' },
+    { id: 'slack', name: 'Slack', icon: 'message-square', color: '#22c55e', desc: 'Push real-time payloads to any Slack channel via webhooks.' },
+    { id: 'discord', name: 'Discord', icon: 'message-circle', color: '#818cf8', desc: 'Alert your team instantly within high-availability channels.' },
+    { id: 'webhook', name: 'Webhooks', icon: 'link', color: '#f59e0b', desc: 'Trigger custom REST endpoints with JSON payloads for workflows.' },
+    { id: 'github', name: 'GitHub', icon: 'github', color: '#ffffff', desc: 'Automate incident tracking by creating repository issues.' }
 ];
 
 async function loadIntegrations() {
@@ -115,41 +150,38 @@ async function loadIntegrations() {
 function renderList() {
     const list = document.getElementById('integrations-list');
     
-    let html = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:24px;">`;
-    
-    PROVIDERS.forEach(prov => {
+    list.innerHTML = PROVIDERS.map(prov => {
         const existing = integrationsData.find(i => i.provider === prov.id);
         const isConfigured = !!existing;
         const isEnabled = existing ? existing.is_enabled : false;
         
-        let statusBadge = `<span style="background:rgba(255,255,255,0.05); color:var(--text-dim); padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;">Not Configured</span>`;
+        let statusBadge = `<span class="text-[9px] font-black text-gray-500 bg-white/5 border border-white/10 px-3 py-1 rounded-full uppercase tracking-widest">INACTIVE</span>`;
         if (isConfigured) {
-            if (isEnabled) statusBadge = `<span style="background:rgba(34,197,94,0.1); color:var(--success); padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;">Active</span>`;
-            else statusBadge = `<span style="background:rgba(239,68,68,0.1); color:var(--danger); padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;">Disabled</span>`;
+            if (isEnabled) statusBadge = `<span class="text-[9px] font-black text-green-500 bg-green-500/10 border border-green-500/20 px-3 py-1 rounded-full uppercase tracking-widest shadow-[0_0_10px_rgba(34,197,94,0.2)]">CONNECTED</span>`;
+            else statusBadge = `<span class="text-[9px] font-black text-red-500 bg-red-500/10 border border-red-500/20 px-3 py-1 rounded-full uppercase tracking-widest">DISABLED</span>`;
         }
 
-        html += `
-        <div class="integration-card">
-            <div>
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
-                    <div style="width:48px; height:48px; border-radius:12px; background:${prov.color}22; display:flex; align-items:center; justify-content:center;">
-                        <i data-lucide="${prov.icon}" style="color:${prov.color}; width:24px; height:24px;"></i>
+        return `
+        <div class="premium-panel p-8 flex flex-col justify-between group hover:border-primary/20 transition-all cursor-default relative overflow-hidden">
+            <div class="relative z-10">
+                <div class="flex justify-between items-start mb-8">
+                    <div class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl transition-transform group-hover:scale-110 duration-500" style="background:${prov.color}15; border: 1px solid ${prov.color}25">
+                        <i data-lucide="${prov.icon}" style="color:${prov.color}; width:28px; height:28px;"></i>
                     </div>
                     ${statusBadge}
                 </div>
-                <h3 style="color:#fff; font-size:18px; font-weight:700; margin:0 0 8px 0;">${prov.name}</h3>
-                <p style="color:var(--text-dim); font-size:13px; line-height:1.5; margin:0;">${prov.desc}</p>
+                <h3 class="text-white font-extrabold text-xl mb-3 tracking-tight">${prov.name}</h3>
+                <p class="text-gray-500 font-medium text-xs leading-relaxed mb-10">${prov.desc}</p>
             </div>
             
-            <button class="btn-primary" style="margin-top:24px; width:100%; justify-content:center;" onclick="openConfig('${prov.id}')">
-                ${isConfigured ? 'Edit Configuration' : 'Configure'}
+            <button class="btn-glass w-full group-hover:!bg-white/5 font-bold py-3 uppercase text-[10px] tracking-widest relative z-10" onclick="openConfig('${prov.id}')">
+                ${isConfigured ? 'Configure Provider' : 'Setup Integration'}
             </button>
+            <div class="absolute bottom-0 right-0 w-32 h-32 blur-[60px] opacity-10 rounded-full -mr-16 -mb-16 -z-0" style="background:${prov.color}"></div>
         </div>
         `;
-    });
+    }).join('');
     
-    html += `</div>`;
-    list.innerHTML = html;
     lucide.createIcons();
 }
 
@@ -162,68 +194,62 @@ function openConfig(providerId) {
     document.getElementById('modal-title').innerText = providerDef.name;
     document.getElementById('modal-icon').setAttribute('data-lucide', providerDef.icon);
     document.getElementById('modal-icon').style.color = providerDef.color;
+    document.getElementById('modal-icon-container').style.background = providerDef.color + '15';
     document.getElementById('int-enabled').checked = existing ? existing.is_enabled : true;
 
     const body = document.getElementById('form-body');
     let formHtml = '';
 
+    const inputStyle = "w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none transition-all placeholder:text-gray-700";
+    const labelStyle = "block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1";
+
     if(providerId === 'email') {
         formHtml = `
-            <div class="form-group"><label class="form-label">SMTP Host</label><input type="text" class="form-input" id="cfg-host" value="${config.smtp_host||''}" required placeholder="smtp.gmail.com"></div>
-            <div class="form-group"><label class="form-label">SMTP Port</label><input type="number" class="form-input" id="cfg-port" value="${config.smtp_port||587}" required></div>
-            <div class="form-group"><label class="form-label">Email Address / Username</label><input type="email" class="form-input" id="cfg-email" value="${config.email||''}" required></div>
-            <div class="form-group"><label class="form-label">Password / App Password</label><input type="password" class="form-input" id="cfg-pass" value="${config.password||''}" required></div>
-            <div class="form-group"><label class="form-label">From Name</label><input type="text" class="form-input" id="cfg-from" value="${config.from_name||'MoniFy Alerts'}"></div>
-            <div class="form-group"><label style="color:#fff;font-size:14px;cursor:pointer;"><input type="checkbox" id="cfg-secure" ${config.secure ? 'checked' : ''}> Use SSL/TLS</label></div>
+            <div><label class="${labelStyle}">SMTP Host</label><input type="text" class="${inputStyle}" id="cfg-host" value="${config.smtp_host||''}" required placeholder="e.g. smtp.gmail.com"></div>
+            <div><label class="${labelStyle}">Port</label><input type="number" class="${inputStyle}" id="cfg-port" value="${config.smtp_port||587}" required></div>
+            <div><label class="${labelStyle}">Auth User</label><input type="email" class="${inputStyle}" id="cfg-email" value="${config.email||''}" required placeholder="email@example.com"></div>
+            <div><label class="${labelStyle}">Password</label><input type="password" class="${inputStyle}" id="cfg-pass" value="${config.password||''}" required></div>
+            <div><label class="${labelStyle}">Sender Name</label><input type="text" class="${inputStyle}" id="cfg-from" value="${config.from_name||'MoniFy Alerts'}"></div>
         `;
     } 
     else if(providerId === 'slack' || providerId === 'discord') {
         formHtml = `
-            <div class="form-group">
-                <label class="form-label">Webhook URL</label>
-                <input type="url" class="form-input" id="cfg-webhook" value="${config.webhook_url||''}" required placeholder="https://...">
+            <div>
+                <label class="${labelStyle}">Destination Webhook</label>
+                <input type="url" class="${inputStyle}" id="cfg-webhook" value="${config.webhook_url||''}" required placeholder="https://hooks.platform.com/...">
             </div>
         `;
     }
     else if(providerId === 'webhook') {
         formHtml = `
-            <div class="form-group"><label class="form-label">Endpoint URL</label><input type="url" class="form-input" id="cfg-ep" value="${config.endpoint_url||''}" required></div>
-            <div class="form-group">
-                <label class="form-label">Method</label>
-                <select class="form-input" id="cfg-method">
-                    <option value="POST" ${config.method==='POST'?'selected':''}>POST</option>
-                    <option value="GET" ${config.method==='GET'?'selected':''}>GET</option>
-                </select>
-            </div>
-            <div class="form-group"><label class="form-label">Headers (JSON)</label><textarea class="form-input" id="cfg-headers" rows="2" placeholder='{"Authorization": "Bearer token"}'>${config.headers||'{}'}</textarea></div>
-            <div class="form-group"><label class="form-label">Body Template (JSON string)</label><textarea class="form-input" id="cfg-body" rows="3" placeholder='{"text": "Monitor {{site_name}} went {{status}}"}'>${config.body_template||'{"text": "Monitor {{site_name}} went {{status}}!"}'}</textarea></div>
+            <div><label class="${labelStyle}">Target URL</label><input type="url" class="${inputStyle}" id="cfg-ep" value="${config.endpoint_url||''}" required></div>
+            <div><label class="${labelStyle}">Request Method</label><select class="${inputStyle}" id="cfg-method"><option value="POST">POST</option><option value="GET">GET</option></select></div>
+            <div><label class="${labelStyle}">Headers (JSON)</label><textarea class="${inputStyle}" id="cfg-headers" rows="2">${config.headers||'{}'}</textarea></div>
+            <div><label class="${labelStyle}">Payload Template</label><textarea class="${inputStyle}" id="cfg-body" rows="3">${config.body_template||'{"text": "Monitor {{site_name}} status: {{status}}"}'}</textarea></div>
         `;
     }
     else if(providerId === 'github') {
         formHtml = `
-            <div class="form-group"><label class="form-label">GitHub Personal Access Token</label><input type="password" class="form-input" id="cfg-ghtoken" value="${config.github_token||''}" required></div>
-            <div class="form-group"><label class="form-label">Repository (owner/repo)</label><input type="text" class="form-input" id="cfg-repo" value="${config.repository||''}" required placeholder="octocat/Hello-World"></div>
-            <div class="form-group"><label style="color:#fff;font-size:14px;cursor:pointer;"><input type="checkbox" id="cfg-ghissue" ${config.enable_issues !== false ? 'checked' : ''}> Create Issue when DOWN</label></div>
+            <div><label class="${labelStyle}">Access Token</label><input type="password" class="${inputStyle}" id="cfg-ghtoken" value="${config.github_token||''}" required></div>
+            <div><label class="${labelStyle}">Repository Path</label><input type="text" class="${inputStyle}" id="cfg-repo" value="${config.repository||''}" required placeholder="owner/repository"></div>
         `;
     }
 
     body.innerHTML = formHtml;
-    
     document.getElementById('test-btn').style.display = existing ? 'block' : 'none';
-    
     lucide.createIcons();
-    document.getElementById('config-modal').classList.add('active');
+    document.getElementById('config-modal').style.display = 'block';
 }
 
 function closeModal() {
-    document.getElementById('config-modal').classList.remove('active');
+    document.getElementById('config-modal').style.display = 'none';
 }
 
 document.getElementById('config-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('save-btn');
-    btn.innerText = 'Saving...';
-    btn.disabled = true;
+    const oldText = btn.innerText;
+    btn.innerText = 'Saving...'; btn.disabled = true;
 
     let config = {};
     if(currentProvider === 'email') {
@@ -232,31 +258,17 @@ document.getElementById('config-form').addEventListener('submit', async (e) => {
             smtp_port: parseInt(document.getElementById('cfg-port').value),
             email: document.getElementById('cfg-email').value,
             password: document.getElementById('cfg-pass').value,
-            from_name: document.getElementById('cfg-from').value,
-            secure: document.getElementById('cfg-secure').checked
+            from_name: document.getElementById('cfg-from').value
         };
     } else if(currentProvider === 'slack' || currentProvider === 'discord') {
         config = { webhook_url: document.getElementById('cfg-webhook').value };
     } else if(currentProvider === 'webhook') {
-        config = {
-            endpoint_url: document.getElementById('cfg-ep').value,
-            method: document.getElementById('cfg-method').value,
-            headers: document.getElementById('cfg-headers').value,
-            body_template: document.getElementById('cfg-body').value
-        };
+        config = { endpoint_url: document.getElementById('cfg-ep').value, method: document.getElementById('cfg-method').value, headers: document.getElementById('cfg-headers').value, body_template: document.getElementById('cfg-body').value };
     } else if(currentProvider === 'github') {
-        config = {
-            github_token: document.getElementById('cfg-ghtoken').value,
-            repository: document.getElementById('cfg-repo').value,
-            enable_issues: document.getElementById('cfg-ghissue').checked
-        };
+        config = { github_token: document.getElementById('cfg-ghtoken').value, repository: document.getElementById('cfg-repo').value };
     }
 
-    const payload = {
-        provider: currentProvider,
-        config: config,
-        is_enabled: document.getElementById('int-enabled').checked
-    };
+    const payload = { provider: currentProvider, config: config, is_enabled: document.getElementById('int-enabled').checked };
 
     try {
         const res = await fetch('/api/integrations', {
@@ -264,38 +276,27 @@ document.getElementById('config-form').addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify(payload)
         });
-        if(!res.ok) throw new Error("Failed to save configuration.");
-        
+        if(!res.ok) throw new Error("Verification failed.");
         closeModal();
         await loadIntegrations();
-        alert("Integration successfully saved!");
+        showToast("Configuration saved successfully!");
     } catch(err) {
-        alert(err.message);
+        showToast("Error updating settings.", "error");
     } finally {
-        btn.innerText = 'Save Config';
-        btn.disabled = false;
+        btn.innerText = oldText; btn.disabled = false;
     }
 });
 
 async function testIntegration() {
     const btn = document.getElementById('test-btn');
-    btn.innerText = 'Sending...';
     btn.disabled = true;
-    
     try {
-        const res = await fetch(`/api/integrations/${currentProvider}/test`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        const data = await res.json();
-        
-        if(!res.ok) throw new Error(data.detail || "Failed to trigger test alert.");
-        alert("Test alert triggered! Please check your platform.");
+        const res = await fetch(`/api/integrations/${currentProvider}/test`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+        if(!res.ok) throw new Error("Test failed.");
+        showToast("Test payload transmitted!");
     } catch(err) {
-        alert(err.message);
+        showToast("Test firing failed.", "error");
     } finally {
-        btn.innerText = 'Test Alert';
         btn.disabled = false;
     }
 }

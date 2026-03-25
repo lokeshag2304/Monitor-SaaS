@@ -1,135 +1,130 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MoniFy-Ping — PageSpeed Insights</title>
-  <meta name="description" content="Check performance scores and load times for any website.">
+  <title>PageSpeed - MoniFy-Ping</title>
   <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/static/css/custom.css">
-  <style>
-    .search-container {
-      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px; padding: 18px; margin-bottom: 24px;
-      display: flex; gap: 12px; align-items: center;
+  <link rel="stylesheet" href="/static/css/dashboard_premium.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
+          colors: {
+            bg: '#070b14', border: 'rgba(255,255,255,0.05)', primary: '#3b82f6'
+          }
+        }
+      }
     }
-    .search-input {
-      background: rgba(8,14,30,0.8); border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 8px; padding: 12px 16px; color: #fff; flex: 1; font-size: 14px;
-    }
-    .search-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
-
-    .ps-table {
-      width: 100%; border-collapse: separate; border-spacing: 0 8px;
-    }
-    .ps-table thead th {
-      font-size: 11px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.08em; color: #4d6a80; padding: 0 16px 10px;
-      text-align: left;
-    }
-    .ps-table tbody tr {
-      background: rgba(8,14,30,0.7); border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 10px; transition: all 0.2s;
-    }
-    .ps-table tbody tr:hover { background: rgba(37,99,235,0.05); transform: translateY(-1px); }
-    .ps-table tbody td {
-      padding: 16px; font-size: 13px; color: #c8d6e8;
-      vertical-align: middle;
-    }
-    
-    .score-circle {
-      width: 42px; height: 42px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 14px; border: 2.5px solid;
-    }
-    .score-green  { background: rgba(34,197,94,0.1); color: #22c55e; border-color: #22c55e; }
-    .score-yellow { background: rgba(234,179,8,0.1);  color: #eab308; border-color: #eab308; }
-    .score-red    { background: rgba(239,68,68,0.1);  color: #ef4444; border-color: #ef4444; }
-    .score-pending { background: rgba(255,255,255,0.05); color: #4d6a80; border-color: rgba(255,255,255,0.1); }
-
-    .perf-badge {
-      font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 100px;
-      text-transform: uppercase; letter-spacing: 0.05em;
-    }
-    .perf-fast { background: rgba(34,197,94,0.15); color: #22c55e; }
-    .perf-average { background: rgba(234,179,8,0.15); color: #eab308; }
-    .perf-slow { background: rgba(239,68,68,0.15); color: #ef4444; }
-    .perf-pending { background: rgba(255,255,255,0.1); color: #4d6a80; }
-
-    .loader-inline { animation: spin 0.8s linear infinite; }
-    @keyframes spin { from {transform:rotate(0deg);} to {transform:rotate(360deg);} }
-
-    .empty-state { text-align:center; padding: 60px 20px; color: #4d6a80; }
-  </style>
+  </script>
 </head>
-<body>
+<body class="bg-bg text-gray-300">
 
-<div class="bg-orb bg-orb-1"></div>
-<div class="bg-orb bg-orb-2"></div>
+<div class="app-shell flex h-screen overflow-hidden">
+  
+  <!-- Sidebar Inject -->
+  <div id="sidebar-container" class="flex-shrink-0"></div>
 
-<div class="app-shell">
-  <div id="sidebar-container"></div>
-
-  <main class="main-content">
-    <header class="top-header">
-      <div class="header-left">
-        <h1 class="header-title">PageSpeed Insights</h1>
-        <p style="font-size:13px; color:#4d6a80; margin-left:4px;">Unified Performance Analyzer</p>
+  <!-- Main Area -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    
+    <!-- Top Navbar -->
+    <header class="top-header flex items-center justify-between z-10">
+      <div class="flex items-center gap-4">
+        <h1 class="header-title font-bold text-white text-2xl">PageSpeed</h1>
+        <span id="admin-badge" class="badge-admin py-1 px-3 rounded-full text-[10px] font-bold tracking-widest uppercase">SUPER ADMIN</span>
       </div>
-      <div style="display:flex; gap:10px;">
-        <button class="btn btn-glass" onclick="loadAllMonitors()"><i data-lucide="refresh-cw"></i> Refresh List</button>
+      <div class="flex items-center gap-4">
+        <button id="theme-toggle" class="theme-btn w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5" title="Toggle theme">
+          <i id="theme-toggle-dark-icon" data-lucide="moon" class="w-4 h-4"></i>
+          <i id="theme-toggle-light-icon" data-lucide="sun" class="w-4 h-4" style="color:#eab308;display:none;"></i>
+        </button>
+        <button onclick="loadAllMonitors()" class="btn-glass flex items-center gap-2 font-semibold">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+        </button>
       </div>
     </header>
 
-    <div style="padding: 0 26px 24px;">
-      <!-- Search & Check Bar -->
-      <div class="search-container">
-        <i data-lucide="search" style="color:#4d6a80; width:20px;"></i>
-        <input type="text" id="site-tester" class="search-input" placeholder="Search monitors or enter URL (e.g., google.com)">
-        <button class="btn btn-primary" id="btn-check" onclick="checkWebsite()">
-          Check Website <i data-lucide="zap" style="width:14px; margin-left:6px;"></i>
-        </button>
-      </div>
+    <!-- Content Area Scrollable -->
+    <div class="flex-1 overflow-y-auto p-8 relative">
+      
+      <!-- Ambient Lights -->
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 -z-10"></div>
+      
+      <div class="max-w-[1200px] mx-auto">
+        <div class="space-y-8">
+          
+          <!-- Unified Search/Analyzer Bar -->
+          <div class="premium-panel p-6">
+              <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary flex-shrink-0 shadow-lg shadow-primary/10">
+                      <i data-lucide="zap" class="w-6 h-6"></i>
+                  </div>
+                  <div class="flex-1 min-w-[300px] relative">
+                      <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                      <input type="text" id="site-tester" placeholder="Search monitors or analyze custom URL (e.g. google.com)" class="w-full bg-white/5 border border-white/5 rounded-xl py-4 pl-12 pr-4 text-sm text-white focus:border-primary outline-none transition-all placeholder:text-gray-600">
+                  </div>
+                  <button class="btn-primary !h-[50px] px-8 flex items-center gap-2 text-white font-bold" id="btn-check" onclick="checkWebsite()">
+                      Run Analysis <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                  </button>
+              </div>
+          </div>
 
-      <!-- Performance Table -->
-      <div style="background: rgba(8,14,30,0.7); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; overflow:hidden;">
-        <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
-          <h2 style="font-size:15px; font-weight:700; color:#fff;">Site Performance</h2>
-          <span id="results-count" style="font-size:12px; color:#4d6a80;"></span>
-        </div>
-        
-        <div style="overflow-x:auto; min-height: 400px;">
-          <table class="ps-table">
-            <thead>
-              <tr>
-                <th style="width:70px;">Score</th>
-                <th>Website</th>
-                <th>Status</th>
-                <th>Load Time</th>
-                <th>Last Checked</th>
-              </tr>
-            </thead>
-            <tbody id="ps-tbody">
-              <!-- Content injected here -->
-            </tbody>
-          </table>
-          <div id="ps-loader" class="empty-state" style="display:none;">
-            <i data-lucide="loader" class="loader-inline" style="width:30px; height:30px; margin-bottom:12px;"></i>
-            <p>Analyzing performance...</p>
+          <!-- Main Table List -->
+          <div class="premium-panel overflow-hidden min-h-[500px]">
+                <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-widest">Performance Insights</h3>
+                    <span id="results-count" class="text-[10px] font-bold text-gray-500 uppercase tracking-widest tracking-tighter"></span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left" id="ps-table">
+                        <thead class="bg-white/[0.02] text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                            <tr>
+                                <th class="px-8 py-4 w-24">Grade</th>
+                                <th class="px-8 py-4">Endpoint</th>
+                                <th class="px-8 py-4 text-center">UX Status</th>
+                                <th class="px-8 py-4 text-center">Load Time</th>
+                                <th class="px-8 py-4 text-right">Last Verified</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ps-tbody" class="divide-y divide-white/5">
+                            <!-- Injected -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="ps-loader" class="p-20 text-center flex-col items-center justify-center hidden">
+                    <div class="animate-spin inline-block mb-4"><i data-lucide="loader" class="text-primary w-8 h-8"></i></div>
+                    <p class="text-gray-500 font-medium">Measuring core vitals...</p>
+                </div>
+
+                <div id="ps-empty" class="p-20 text-center flex flex-col items-center justify-center">
+                    <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
+                         <i data-lucide="gauge" class="text-gray-600 w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-white font-bold">Analysis Engine Ready</h3>
+                    <p class="text-gray-500 text-sm max-w-xs">Scan any URL or search through your monitored services to see real-world performance scores.</p>
+                </div>
           </div>
-          <div id="ps-empty" class="empty-state">
-            <i data-lucide="search" style="width:40px; height:40px; margin-bottom:12px; opacity:0.3;"></i>
-            <p>Search your monitors or enter a URL to begin analysis.</p>
-          </div>
+
         </div>
       </div>
     </div>
+
   </main>
 </div>
 
-<script src="/static/js/app.js"></script>
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/toast.js"></script>
 <script>
 (function() {
   const API_URL = window.location.origin;
@@ -146,7 +141,7 @@
       renderTable(monitors);
     } catch (err) {
       console.error('Failed to load PageSpeed list:', err);
-      showError("Unable to fetch performance data.");
+      showError("Connection failed. Service unavailable.");
     } finally {
       setLoading(false);
     }
@@ -156,30 +151,21 @@
     const input = document.getElementById('site-tester');
     const url = input.value.trim();
     if (!url) return;
-
     setLoading(true);
     const btn = document.getElementById('btn-check');
     btn.disabled = true;
-
     try {
       const res = await fetch(`${API_URL}/api/pagespeed/?url=${encodeURIComponent(url)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("API Failed");
       const result = await res.json();
-      
-      // Add to the local monitors array if not present, or update it
       const existingIdx = monitors.findIndex(m => m.website === result.website);
-      if (existingIdx !== -1) {
-        monitors[existingIdx] = result;
-      } else {
-        monitors.unshift(result);
-      }
-      
+      if (existingIdx !== -1) monitors[existingIdx] = result;
+      else monitors.unshift(result);
       renderTable(monitors);
     } catch (err) {
-      console.error('Check failed:', err);
-      showError("Unable to fetch performance data for this URL.");
+      showError("Unable to analyze URL. Please check if the site is reachable.");
     } finally {
       setLoading(false);
       btn.disabled = false;
@@ -189,88 +175,89 @@
   function renderTable(data) {
     const tbody = document.getElementById('ps-tbody');
     const empty = document.getElementById('ps-empty');
-    
     if (!data || data.length === 0) {
       tbody.innerHTML = '';
-      empty.style.display = 'block';
+      empty.classList.remove('hidden');
       document.getElementById('results-count').innerText = '';
       return;
     }
-
-    empty.style.display = 'none';
-    document.getElementById('results-count').innerText = `${data.length} results`;
+    empty.classList.add('hidden');
+    document.getElementById('results-count').innerText = `${data.length} endpoints analyzed`;
 
     tbody.innerHTML = data.map(item => {
       let scoreLabel = item.score !== null ? item.score : '--';
-      let scoreClass = 'score-pending';
+      let scoreColor = 'text-gray-500 border-gray-500/20';
       if (item.score !== null) {
-        if (item.score >= 90) scoreClass = 'score-green';
-        else if (item.score >= 50) scoreClass = 'score-yellow';
-        else scoreClass = 'score-red';
+        if (item.score >= 90) scoreColor = 'text-green-500 border-green-500/20 bg-green-500/5';
+        else if (item.score >= 50) scoreColor = 'text-yellow-500 border-yellow-500/20 bg-yellow-500/5';
+        else scoreColor = 'text-red-500 border-red-500/20 bg-red-500/5';
       }
-
       let statusLabel = item.status || 'PENDING';
-      let statusClass = 'perf-pending';
-      if (statusLabel === 'FAST') statusClass = 'perf-fast';
-      else if (statusLabel === 'AVERAGE') statusClass = 'perf-average';
-      else if (statusLabel === 'SLOW') statusClass = 'perf-slow';
+      let statusDot = 'bg-gray-500';
+      if (statusLabel === 'FAST') statusDot = 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]';
+      else if (statusLabel === 'AVERAGE') statusDot = 'bg-yellow-500';
+      else if (statusLabel === 'SLOW') statusDot = 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]';
 
       const website = item.website || item.url || item.monitor_name;
       const loadTime = item.load_time > 0 ? `${Math.round(item.load_time)}ms` : '--';
-      
-      let timeStr = 'Never';
-      if (item.last_checked || item.checked_at) {
-        const date = new Date(item.last_checked || item.checked_at);
-        const diff = Math.floor((new Date() - date) / 1000);
-        if (diff < 60) timeStr = `${diff} sec ago`;
-        else if (diff < 3600) timeStr = `${Math.floor(diff/60)} min ago`;
-        else timeStr = date.toLocaleString();
-      }
+      const timeStr = formatDateRel(item.last_checked || item.checked_at);
 
       return `
-        <tr>
-          <td><div class="score-circle ${scoreClass}">${scoreLabel}</div></td>
-          <td>
-            <div style="font-weight:700; color:#fff; font-size:14px;">${website}</div>
-            <div style="font-size:11px; opacity:0.5;">${item.monitor_name || website}</div>
+        <tr class="hover:bg-white/[0.01] transition-colors group">
+          <td class="px-8 py-5">
+             <div class="w-12 h-12 rounded-2xl border flex items-center justify-center font-black text-lg ${scoreColor}">
+                ${scoreLabel}
+             </div>
           </td>
-          <td><span class="perf-badge ${statusClass}">${statusLabel}</span></td>
-          <td style="font-weight:700; color:#fff;">${loadTime}</td>
-          <td style="font-size:12px; opacity:0.6;">${timeStr}</td>
+          <td class="px-8 py-5">
+            <div class="text-sm font-bold text-white group-hover:text-primary transition-colors">${website}</div>
+            <div class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">${item.monitor_name || 'Individual Scan'}</div>
+          </td>
+          <td class="px-8 py-5 text-center">
+             <div class="inline-flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-full border border-white/5">
+                <span class="w-1.5 h-1.5 rounded-full ${statusDot}"></span>
+                <span class="text-[10px] font-bold text-white tracking-widest uppercase">${statusLabel}</span>
+             </div>
+          </td>
+          <td class="px-8 py-5 text-center font-bold text-white text-sm">
+             ${loadTime}
+          </td>
+          <td class="px-8 py-5 text-right text-xs text-gray-500 font-medium">
+             ${timeStr}
+          </td>
         </tr>
       `;
     }).join('');
-    
     lucide.createIcons();
   }
 
+  function formatDateRel(iso) {
+    if (!iso) return 'Never';
+    const date = new Date(iso);
+    const diff = Math.floor((new Date() - date) / 1000);
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+    return date.toLocaleDateString();
+  }
+
   function setLoading(loading) {
-    document.getElementById('ps-loader').style.display = loading ? 'block' : 'none';
-    if (loading) document.getElementById('ps-empty').style.display = 'none';
+    document.getElementById('ps-loader').classList.toggle('hidden', !loading);
+    if (loading) document.getElementById('ps-empty').classList.add('hidden');
   }
 
   function showError(msg) {
     const tbody = document.getElementById('ps-tbody');
-    tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;"><i data-lucide="alert-circle" style="width:30px; height:30px; margin-bottom:10px;"></i><p>${msg}</p></td></tr>`;
-    lucide.createIcons();
+    tbody.innerHTML = `<tr><td colspan="5" class="p-20 text-center"><p class="text-red-500 font-bold">${msg}</p></td></tr>`;
   }
 
-  // Handle Enter Key
   document.getElementById('site-tester').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') checkWebsite();
   });
 
   document.getElementById('site-tester').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
-    if (!term) {
-        renderTable(monitors);
-        return;
-    }
-    const filtered = monitors.filter(m => 
-        (m.monitor_name && m.monitor_name.toLowerCase().includes(term)) || 
-        (m.url && m.url.toLowerCase().includes(term)) ||
-        (m.website && m.website.toLowerCase().includes(term))
-    );
+    const filtered = monitors.filter(m => (m.website && m.website.toLowerCase().includes(term)) || (m.url && m.url.toLowerCase().includes(term)));
     renderTable(filtered);
   });
 

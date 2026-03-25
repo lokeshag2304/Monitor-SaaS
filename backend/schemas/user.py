@@ -49,9 +49,11 @@ class UserResponse(UserBase):
     profile_image: Optional[str] = None
     phone: Optional[str] = None
     company: Optional[str] = None
-    timezone: Optional[str] = None
-    notification_preferences: Optional[str] = None
-    default_check_interval: Optional[int] = None
+    theme_mode: Optional[str] = "dark"
+    theme_color: Optional[str] = "#3b82f6"
+    glass_effect: Optional[str] = "normal"
+    background_alt: Optional[str] = "dark-depth"
+    font_family: Optional[str] = "Plus Jakarta Sans"
     is_active: bool = True
     
     class Config:

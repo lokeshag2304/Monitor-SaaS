@@ -1,104 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Support — MoniFy-Ping</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>Support - MoniFy-Ping</title>
   <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
-  <link rel="stylesheet" href="/static/css/custom.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    .support-container {
-      max-width: 500px;
-      margin: 60px auto;
-      text-align: center;
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/custom.css">
+  <link rel="stylesheet" href="/static/css/dashboard_premium.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
+          colors: {
+            bg: '#070b14', border: 'rgba(255,255,255,0.05)', primary: '#3b82f6'
+          }
+        }
+      }
     }
-    .support-icon {
-      width: 72px;
-      height: 72px;
-      background: rgba(59, 130, 246, 0.12);
-      color: #3b82f6;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 24px;
-    }
-    .support-icon i { width: 36px; height: 36px; }
-    .btn-contact {
-      background: #2563eb;
-      color: #fff;
-      border: none;
-      padding: 12px 28px;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 15px;
-      transition: all 0.2s;
-      text-decoration: none;
-      margin-top: 24px;
-    }
-    .btn-contact:hover {
-      box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
-      transform: translateY(-2px);
-    }
-  </style>
+  </script>
 </head>
-<body>
+<body class="bg-bg text-gray-300">
 
-<div class="bg-orb bg-orb-1"></div>
-<div class="bg-orb bg-orb-2"></div>
+<div class="app-shell flex h-screen overflow-hidden">
+  
+  <div id="sidebar-container" class="flex-shrink-0"></div>
 
-<div class="app-shell">
-  <div id="sidebar-container"></div>
-  <main class="main-content">
-    <header class="top-header">
-      <div class="header-left"><h1 class="header-title">Help &amp; Support</h1></div>
-      <div class="header-right">
-        <button id="theme-toggle" class="theme-btn" title="Toggle theme">
-          <i id="theme-toggle-dark-icon" data-lucide="moon"></i>
-          <i id="theme-toggle-light-icon" data-lucide="sun" style="color:#eab308;display:none;"></i>
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    
+    <header class="top-header flex items-center justify-between z-10 px-8">
+      <h1 class="header-title font-bold text-white text-2xl">Help & Support</h1>
+      <div class="flex items-center gap-4">
+        <button id="theme-toggle" class="theme-btn w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/5">
+          <i id="theme-toggle-dark-icon" data-lucide="moon" class="w-4 h-4"></i>
+          <i id="theme-toggle-light-icon" data-lucide="sun" class="w-4 h-4" style="color:#eab308;display:none;"></i>
         </button>
       </div>
     </header>
 
-    <div class="content-body" id="content-view" style="padding:40px;overflow-y:auto;">
-      <div class="support-container">
-        <div class="glass-panel" style="padding:48px 40px;">
-          <div class="support-icon">
-            <i data-lucide="life-buoy"></i>
-          </div>
-          <h2 style="color:#fff;font-size:26px;font-weight:800;margin-bottom:12px;">Contact Support</h2>
-          <p style="color:var(--text-muted);font-size:15px;line-height:1.6;">
-            Need help with your monitors or account? Our admin team is here to assist you.
-          </p>
-          <div style="margin-top:24px;padding:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;text-align:left;">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-              <i data-lucide="mail" style="width:16px;height:16px;color:#3b82f6;"></i>
-              <span style="color:var(--text-muted);font-size:13px;">admin@monify-ping.com</span>
+    <div class="flex-1 overflow-y-auto p-8 relative flex items-center justify-center">
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 -z-10"></div>
+      
+      <div class="max-w-[500px] w-full mx-auto">
+        <div class="premium-panel p-10 text-center space-y-8 animate-slide-up">
+            <div class="w-20 h-20 bg-primary/10 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-primary/20 border border-primary/20">
+                <i data-lucide="life-buoy" class="w-10 h-10 text-primary"></i>
             </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <i data-lucide="clock" style="width:16px;height:16px;color:#22c55e;"></i>
-              <span style="color:var(--text-muted);font-size:13px;">Response within 24 hours</span>
+            
+            <div class="space-y-3">
+                <h2 class="text-2xl font-black text-white">Contact Systems Support</h2>
+                <p class="text-sm text-gray-500 font-medium leading-relaxed">Facing issues with your monitors or infrastructure setup? Our team of engineers is available 24/7.</p>
             </div>
-          </div>
-          <button id="notify-admin" class="btn-contact">
-            <i data-lucide="send"></i> Contact Admin
-          </button>
+
+            <div class="grid grid-cols-1 gap-4 text-left">
+                <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-gray-600 uppercase tracking-widest leading-none mb-1">Email Terminal</span>
+                        <span class="text-sm font-bold text-white">support@monify-ping.io</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-gray-600 uppercase tracking-widest leading-none mb-1">Response Latency</span>
+                        <span class="text-sm font-bold text-white">&lt; 120 Minutes Avg.</span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="notify-admin" class="btn-primary w-full py-4 text-white font-bold flex items-center justify-center gap-3">
+                <i data-lucide="send" class="w-5 h-5"></i> Open Support Ticket
+            </button>
         </div>
       </div>
     </div>
-  </main>
-</div><!-- /app-shell -->
 
-<div id="support-toast" style="position:fixed;bottom:24px;right:24px;background:#22c55e;color:#fff;padding:12px 24px;border-radius:10px;font-weight:600;font-size:14px;transform:translateY(100px);opacity:0;transition:all 0.3s;z-index:1000;">
-  ✅ Admin has been notified!
+  </main>
 </div>
 
 <script src="/static/js/config.js"></script>
@@ -106,26 +92,19 @@
 <script src="/static/js/app.js?v=3"></script>
 <script src="/static/js/toast.js"></script>
 <script>
-  console.log("Page Loaded: Support");
   lucide.createIcons();
 
   document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem('token');
-    if (!token) { window.location.href = '/'; return; }
+    if (!token) { window.location.href = '/login'; return; }
 
     const btn = document.getElementById('notify-admin');
-    const toast = document.getElementById('support-toast');
-
     btn.addEventListener('click', () => {
-      toast.style.transform = 'translateY(0)';
-      toast.style.opacity = '1';
-      setTimeout(() => {
-        toast.style.transform = 'translateY(100px)';
-        toast.style.opacity = '0';
-      }, 3000);
+      showToast("Support ticket initialized! Checking queue...");
+      btn.innerText = "Ticket Dispatched";
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
     });
-
-    lucide.createIcons();
   });
 </script>
 </body>

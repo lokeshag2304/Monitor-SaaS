@@ -1,123 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MoniFy-Ping — Monitoring Dashboard</title>
-  <meta name="description" content="MoniFy-Ping: Professional uptime monitoring platform.">
+  <title>Monitoring - MoniFy-Ping</title>
   <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="/static/css/custom.css">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/custom.css">
+  <link rel="stylesheet" href="/static/css/dashboard_premium.css">
   <script>
-    tailwind.config={corePlugins:{preflight:false},darkMode:'class',theme:{extend:{colors:{
-      success:'#22c55e',danger:'#ef4444',warning:'#eab308',primary:'#2563eb',
-      bg:'var(--bg-main)',card:'var(--bg-panel)',border:'var(--border-main)',hover:'var(--bg-hover)'
-    }}}}
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
+          colors: {
+            bg: '#070b14', border: 'rgba(255,255,255,0.05)', primary: '#3b82f6'
+          }
+        }
+      }
+    }
   </script>
 </head>
-<body>
+<body class="bg-bg text-gray-300">
 
-<div class="bg-orb bg-orb-1"></div>
-<div class="bg-orb bg-orb-2"></div>
-<canvas id="particles-canvas"></canvas>
+<div class="app-shell flex h-screen overflow-hidden">
+  
+  <!-- Sidebar Inject -->
+  <div id="sidebar-container" class="flex-shrink-0"></div>
 
-<div class="app-shell">
-
-  <!-- ═══════════════ SIDEBAR ═══════════════ -->
-  <div id="sidebar-container"></div>
-
-  <!-- ═══════════════ MAIN ═══════════════ -->
-  <main class="main-content">
-
-    <!-- Top Header -->
-    <header class="top-header">
-      <div class="header-left">
-        <h1 class="header-title">Uptime</h1>
-        <span id="admin-badge" class="badge-admin hidden">SUPER ADMIN</span>
+  <!-- Main Area -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    
+    <!-- Top Navbar -->
+    <header class="top-header flex items-center justify-between z-10">
+      <div class="flex items-center gap-4">
+        <h1 class="header-title font-bold text-white text-2xl">Monitoring</h1>
+        <span id="admin-badge" class="badge-admin py-1 px-3 rounded-full text-[10px] font-bold tracking-widest uppercase">SUPER ADMIN</span>
       </div>
-      <div class="header-right" id="admin-actions-container">
-        <button id="theme-toggle" class="theme-btn" title="Toggle theme">
-          <i id="theme-toggle-dark-icon" data-lucide="moon"></i>
-          <i id="theme-toggle-light-icon" data-lucide="sun" style="color:#eab308;display:none;"></i>
+      <div class="flex items-center gap-4">
+        <button id="theme-toggle" class="theme-btn w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5" title="Toggle theme">
+          <i id="theme-toggle-dark-icon" data-lucide="moon" class="w-4 h-4"></i>
+          <i id="theme-toggle-light-icon" data-lucide="sun" class="w-4 h-4" style="color:#eab308;display:none;"></i>
         </button>
-        <button onclick="toggleBulkModal()" class="btn btn-glass" id="bulk-import-btn">
-          <i data-lucide="upload"></i>
-          <span class="btn-label">Bulk Import</span>
+        <button onclick="toggleBulkModal()" class="btn-glass flex items-center gap-2 font-semibold">
+          <i data-lucide="upload" class="w-4 h-4"></i> Bulk Import
         </button>
-        <button onclick="toggleModal('add-modal')" class="btn btn-primary" id="create-new-btn">
-          <i data-lucide="plus"></i>
-          <span class="btn-label">Create new</span>
+        <button onclick="toggleModal('add-modal')" class="btn-primary flex items-center gap-2 text-white">
+          <i data-lucide="plus" class="w-4 h-4"></i> Create New
         </button>
       </div>
     </header>
 
-    <!-- Content Body -->
-    <div class="content-body" id="content-view">
-
-      <!-- ══════ UPTIME VIEW (main) ══════ -->
-      <div id="uptime-view" style="display:flex;flex:1;overflow:hidden;">
-
-        <!-- Left: monitors area -->
-        <div class="monitors-area">
-
-          <!-- Greeting -->
-          <div class="greeting-bar">
-            <h1 class="greeting-title">Hey there, <span class="greeting-name" id="greeting-name-display">User</span> 🍕</h1>
-            <p class="greeting-sub">Here's an overview of your MoniFy-Ping monitors.</p>
+    <!-- Content Area Scrollable -->
+    <div class="flex-1 overflow-y-auto p-8 relative">
+      
+      <!-- Ambient Lights -->
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 -z-10"></div>
+      
+      <div class="max-w-[1400px] mx-auto">
+        <div class="space-y-8">
+          
+          <!-- Greeting Section -->
+          <div class="premium-panel p-8 md:p-10">
+            <div class="flex items-center gap-4 mb-4">
+               <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <i data-lucide="activity" class="text-primary w-6 h-6"></i>
+               </div>
+               <div>
+                  <h1 class="text-2xl font-bold text-white tracking-tight">Hey there, <span class="text-primary" id="greeting-name-display">User</span> 🍕</h1>
+                  <p class="text-gray-500 font-medium">Here's a comprehensive overview of your uptime monitors.</p>
+               </div>
+            </div>
           </div>
 
-          <!-- Search + Filter -->
-          <div class="search-filter-bar">
-            <div class="search-wrap">
-              <i data-lucide="search" class="search-icon"></i>
-              <input type="text" id="monitor-search" placeholder="Search monitors..." oninput="filterMonitorCards()" autocomplete="off">
+          <!-- Filters Section -->
+          <div class="premium-panel p-6 flex flex-wrap items-center gap-4">
+            <div class="relative flex-1 min-w-[300px]">
+              <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+              <input type="text" id="monitor-search" placeholder="Search monitors..." oninput="filterMonitorCards()" class="w-full bg-white/5 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:border-primary outline-none transition-all placeholder:text-gray-600" autocomplete="off">
             </div>
-            <select class="filter-select" id="status-filter" onchange="filterMonitorCards()">
+            <select class="bg-white/5 border border-white/5 text-gray-400 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none cursor-pointer" id="status-filter" onchange="filterMonitorCards()">
               <option value="all">All Status</option>
-              <option value="up">UP</option>
-              <option value="down">DOWN</option>
+              <option value="up">UP Only</option>
+              <option value="down">DOWN Only</option>
               <option value="paused">Paused</option>
             </select>
-            <select class="filter-select" id="sort-filter" onchange="filterMonitorCards()">
+            <select class="bg-white/5 border border-white/5 text-gray-400 rounded-xl px-4 py-3 text-sm focus:border-primary outline-none cursor-pointer" id="sort-filter" onchange="filterMonitorCards()">
               <option value="default">Sort: Default</option>
               <option value="response">Response Time</option>
               <option value="down">Down First</option>
               <option value="name">Name A-Z</option>
             </select>
-            <div class="monitor-counter">
-              <span class="counter-dot"></span>
-              <span id="monitor-count">0 monitors</span>
+            <div class="flex items-center gap-3 bg-white/5 border border-white/5 px-4 py-3 rounded-xl ml-auto">
+                <span class="status-dot-live"></span>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest" id="monitor-count">0 monitors</span>
             </div>
           </div>
 
-          <!-- Monitor List Header -->
-          <div class="monitor-list-header">
-            <div>Monitor</div>
-            <div style="text-align:center;">Status</div>
-            <div>Response Time</div>
-            <div>Interval</div>
-            <div>Uptime History</div>
-            <div style="text-align:right;">Actions</div>
-          </div>
-
-          <!-- Monitor Cards List -->
-          <div class="monitor-cards-list" id="monitor-cards-container">
-            <div class="cards-empty" id="cards-empty-state">
-              <p style="font-size:15px;margin-bottom:6px;">🚀 No monitors yet</p>
-              <p style="color:#2d4a62;">Click "Create new" to add your first monitor.</p>
+          <!-- Monitor List -->
+          <div class="premium-panel p-6 overflow-x-auto">
+            <div class="monitor-list-header mb-4 px-4 opacity-50">
+                <!-- Data injected by app.js / dashboard.js -->
+            </div>
+            <div class="space-y-3" id="monitor-cards-container">
+                <div class="flex flex-col items-center justify-center p-20 text-center space-y-4">
+                    <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center animate-pulse">
+                        <i data-lucide="rocket" class="text-gray-600 w-8 h-8"></i>
+                    </div>
+                    <p class="text-gray-500 font-medium">Initializing Monitoring Engine...</p>
+                </div>
             </div>
           </div>
-        </div><!-- /monitors-area -->
-      </div><!-- /uptime-view -->
-    </div><!-- /content-view -->
+
+        </div>
+      </div>
+    </div>
+
   </main>
-</div><!-- /app-shell -->
+</div>
 
-<!-- ADD MONITOR MODAL -->
+<!-- Modal Placeholders -->
 <div id="add-modal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-title">Add New Monitor</div>
@@ -134,33 +139,12 @@
   </div>
 </div>
 
-<!-- PARTICLES -->
-<script>
-console.log("Page Loaded: Monitoring");
-(function(){
-  const c=document.getElementById('particles-canvas'),ctx=c.getContext('2d');
-  let W,H;
-  const r=()=>{W=c.width=innerWidth;H=c.height=innerHeight;};
-  window.addEventListener('resize',r);r();
-  const cols=['rgba(29,78,216,','rgba(6,182,212,','rgba(124,58,237,','rgba(16,185,129,'];
-  const pts=Array.from({length:50},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,rx:(Math.random()-.5)*.28,ry:(Math.random()-.5)*.28,rad:Math.random()*1.3+.3,a:Math.random()*.4+.07,c:cols[Math.floor(Math.random()*cols.length)]}));
-  (function f(){
-    ctx.clearRect(0,0,W,H);
-    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-      const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);
-      if(d<115){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(37,99,235,${(1-d/115)*.06})`;ctx.lineWidth=.5;ctx.stroke();}
-    }
-    pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.rad,0,Math.PI*2);ctx.fillStyle=p.c+p.a+')';ctx.fill();p.x+=p.rx;p.y+=p.ry;if(p.x<-5||p.x>W+5)p.rx*=-1;if(p.y<-5||p.y>H+5)p.ry*=-1;});
-    requestAnimationFrame(f);
-  })();
-})();
-</script>
-
 <script src="/static/js/config.js"></script>
 <script src="/static/js/api.js"></script>
 <script src="/static/js/app.js?v=3"></script>
 <script src="/static/js/dashboard.js"></script>
 <script src="/static/js/toast.js"></script>
 <script>lucide.createIcons();</script>
+
 </body>
 </html>

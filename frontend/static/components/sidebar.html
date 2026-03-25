@@ -1,53 +1,66 @@
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-logo">
-    <div class="sidebar-logo-icon"><img src="/static/logo.jpg" alt="MoniFy-Ping"></div>
-    <span class="sidebar-logo-text">MoniFy-Ping</span>
+  <div class="sidebar-logo p-8 mb-6">
+    <div class="relative group">
+        <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+        <div class="relative flex items-center justify-center bg-black rounded-xl p-2 sidebar-logo-icon">
+            <img src="/static/logo.jpg" alt="MoniFy-Ping" class="w-8 h-8 rounded-lg">
+        </div>
+    </div>
+    <span class="sidebar-logo-text font-bold ml-3 text-white tracking-tight">MoniFy-Ping</span>
   </div>
 
-  <div class="sidebar-section-label">Main Menu</div>
-  <nav class="sidebar-nav">
-    <a href="/dashboard" id="uptime-link" class="nav-item">
-      <i data-lucide="layout-dashboard"></i> Dashboard
+  <div class="px-6 mb-4">
+    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest pl-4">Main Menu</span>
+  </div>
+
+  <nav class="sidebar-nav space-y-1">
+    <a href="/dashboard" id="dash-link" class="nav-item flex items-center">
+      <i data-lucide="layout-dashboard" class="mr-3"></i> Dashboard
     </a>
-    <a href="/monitoring" id="monitoring-link" class="nav-item">
-      <i data-lucide="activity"></i> Monitoring
+    <a href="/monitoring" id="monitoring-link" class="nav-item flex items-center">
+      <i data-lucide="activity" class="mr-3"></i> Monitoring
     </a>
-    <a href="/reports" id="reports-link" class="nav-item">
-      <i data-lucide="bar-chart-2"></i> Reports
+    <a href="/reports" id="reports-link" class="nav-item flex items-center">
+        <i data-lucide="bar-chart-2" class="mr-3"></i> Reports
     </a>
-    <a href="/pagespeed" id="pagespeed-link" class="nav-item">
-      <i data-lucide="zap"></i> PageSpeed
+    <a href="/pagespeed" id="pagespeed-link" class="nav-item flex items-center underline decoration-primary/20 decoration-dashed">
+      <i data-lucide="zap" class="mr-3"></i> PageSpeed
     </a>
-    <a href="/incidents" id="incidents-link" class="nav-item">
-      <i data-lucide="alert-circle"></i> Incidents
+    <a href="/incidents" id="incidents-link" class="nav-item flex items-center">
+      <i data-lucide="alert-circle" class="mr-3"></i> Incidents
     </a>
-    <a href="/status-pages" id="status-pages-link" class="nav-item">
-      <i data-lucide="globe"></i> Status Pages
+    <a href="/status-pages" id="status-pages-link" class="nav-item flex items-center ">
+      <i data-lucide="globe" class="mr-3"></i> Status Pages
     </a>
-    <a href="/integrations" id="infrastructure-link" class="nav-item">
-      <i data-lucide="link-2"></i> Integrations
+    <a href="/integrations" id="infrastructure-link" class="nav-item flex items-center">
+      <i data-lucide="link-2" class="mr-3"></i> Integrations
     </a>
-    <a href="/settings" id="settings-link" class="nav-item">
-      <i data-lucide="settings"></i> Settings
+    <a href="/settings" id="settings-link" class="nav-item flex items-center">
+      <i data-lucide="settings" class="mr-3"></i> Settings
     </a>
-    <a href="/support" id="support-link" class="nav-item">
-      <i data-lucide="help-circle"></i> Support
+    <a href="/support" id="support-link" class="nav-item flex items-center">
+      <i data-lucide="help-circle" class="mr-3"></i> Support
     </a>
   </nav>
 
-  <div class="sidebar-footer">
-    <a href="#" id="logout-btn-sidebar" class="nav-item danger">
-      <i data-lucide="log-out"></i> Logout
-    </a>
-  </div>
+  <div class="mt-auto pb-8">
+    <div class="px-8 mb-6">
+        <a href="#" id="logout-btn-sidebar" class="nav-item flex items-center !text-red-400/80 hover:!text-red-400 hover:!bg-red-400/10">
+            <i data-lucide="log-out" class="mr-3 text-red-400"></i> Logout
+        </a>
+    </div>
 
-  <div class="sidebar-user">
-    <div class="sidebar-user-info">
-      <div class="user-avatar" id="user-avatar">LA</div>
-      <div class="sidebar-user-meta">
-        <span class="sidebar-user-name" id="user-name">Lokesh Agarwal</span>
-        <span class="sidebar-user-role" id="user-role">Super Admin</span>
-      </div>
+    <!-- User Section -->
+    <div class="px-6">
+        <div class="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20" id="user-avatar-initials">
+                LA
+            </div>
+            <div class="ml-3 overflow-hidden">
+                <p class="text-xs font-bold text-white truncate" id="user-display-name">Lokesh Agarwal</p>
+                <p class="text-[10px] font-medium text-gray-500 uppercase tracking-tighter truncate" id="user-display-role">Super Admin</p>
+            </div>
+        </div>
     </div>
   </div>
 </aside>

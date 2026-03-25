@@ -3,87 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoniFy-Ping</title>
+    <title>Login - MoniFy-Ping</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/jpeg" href="static/logo.jpg">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
                     colors: {
-                        bg: '#0b0e14',
-                        sidebar: '#0b0e14',
-                        card: '#151a23',
-                        border: '#242c35',
+                        bg: '#070b14',
+                        card: 'rgba(21, 26, 35, 0.4)',
                         primary: '#3b82f6',
-                        success: '#22c55e',
-                        danger: '#ef4444',
-                        warning: '#eab308'
+                        accent: '#a855f7',
+                        neonBlue: '#00f2ff',
+                        neonPurple: '#bf00ff'
                     }
                 }
             }
         }
     </script>
     <style>
-        .logo-circle { width: 48px; height: 48px; }
-        .logo-circle img { width: 100%; height: 100%; object-fit: contain; }
+        :root {
+            --primary-glow: radial-gradient(rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0));
+            --secondary-glow: linear-gradient(to bottom right, rgba(168, 85, 247, 0.1), rgba(59, 130, 246, 0.1));
+        }
+
+        body {
+            background: #070b14;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        /* Animated Background Waves */
+        .bg-waves {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+        }
+
+        .wave {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.03), transparent);
+            height: 1px;
+            width: 200%;
+            transform: rotate(-15deg);
+            animation: waveFlow 10s linear infinite;
+        }
+
+        @keyframes waveFlow {
+            from { transform: translateX(-50%) rotate(-15deg); }
+            to { transform: translateX(0%) rotate(-15deg); }
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                        inset 0 0 20px rgba(59, 130, 246, 0.05);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), transparent, rgba(168, 85, 247, 0.3));
+            z-index: -1;
+            border-radius: 1.5rem;
+            opacity: 0.5;
+        }
+
+        /* Floating Animation */
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotateX(0deg); }
+            50% { transform: translateY(-15px) rotateX(2deg); }
+        }
+
+        /* Inputs */
+        .glass-input {
+            background: rgba(7, 11, 20, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            background: rgba(7, 11, 20, 0.8);
+        }
+
+        /* Button Glow */
+        .premium-btn {
+            background: linear-gradient(135deg, #3b82f6, #8061ff);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .premium-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .premium-btn:hover {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .premium-btn:hover::before {
+            left: 100%;
+        }
+
+        /* Particles container */
+        #particles {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .logo-glow {
+            filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.5));
+            animation: pulseGlow 3s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            from { filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.4)); }
+            to { filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.6)); }
+        }
     </style>
 </head>
-<body class="bg-bg text-gray-300 flex items-center justify-center h-screen selection:bg-primary selection:text-white">
-    <div class="w-full max-w-md p-8 bg-card border border-border rounded-xl shadow-2xl">
-        <div class="flex justify-center mb-6">
-            <div class="logo-circle">
-                <img src="static/logo.jpg" alt="MoniFy-Ping Logo">
-            </div>
-        </div>
-        <h2 class="text-2xl font-bold text-center text-white mb-2">MoniFy-Ping</h2>
-        <p class="text-center text-gray-500 text-sm mb-8">Sign in or create your free account.</p>
+<body class="flex items-center justify-center min-h-screen">
+    
+    <div class="bg-waves">
+        <div class="wave" style="top: 20%; animation-delay: 0s;"></div>
+        <div class="wave" style="top: 50%; animation-delay: -3s;"></div>
+        <div class="wave" style="top: 80%; animation-delay: -6s;"></div>
+    </div>
+    <canvas id="particles"></canvas>
 
-        <div id="error-msg" class="hidden bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-6 text-sm text-center"></div>
+    <div id="login-card-container" class="w-full max-w-[420px] px-6">
+        <div class="glass-card floating rounded-[24px] p-8 md:p-10 opacity-0 transform translate-y-10 transition-all duration-1000 ease-out" id="main-card">
+            
+            <div class="flex justify-center mb-8">
+                <div class="relative">
+                    <div class="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
+                    <img src="static/logo.jpg" alt="MoniFy-Ping Logo" class="w-16 h-16 rounded-2xl logo-glow relative z-10">
+                </div>
+            </div>
 
-        <form id="login-form" class="space-y-5">
-            <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Email</label>
-                <input type="email" id="email" class="w-full bg-bg border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white transition-all" required>
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-white mb-2 tracking-tight">MoniFy-Ping</h2>
+                <p class="text-gray-400/80 text-sm font-medium">Sign in or create your free account.</p>
             </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Password</label>
-                <input type="password" id="password" class="w-full bg-bg border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white transition-all" required>
+
+            <div id="error-msg" class="hidden bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl mb-6 text-sm text-center backdrop-blur-sm animate-shake"></div>
+
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2.5 ml-1">Email Address</label>
+                    <input type="email" id="email" 
+                        class="w-full glass-input rounded-xl px-4 py-3.5 text-sm text-white outline-none placeholder:text-gray-600" 
+                        placeholder="name@company.com" required>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-2.5 ml-1">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest">Password</label>
+                        <a href="#" class="text-[10px] uppercase font-bold text-primary hover:text-white transition-colors tracking-tighter">Forgot?</a>
+                    </div>
+                    <input type="password" id="password" 
+                        class="w-full glass-input rounded-xl px-4 py-3.5 text-sm text-white outline-none placeholder:text-gray-600" 
+                        placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="w-full premium-btn text-white font-bold py-4 rounded-xl transition-all shadow-2xl shadow-primary/20 mt-4 active:scale-95">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="mt-10 pt-6 border-t border-white/5 text-center">
+                <p class="text-sm text-gray-500 font-medium tracking-wide">
+                    Don't have an account? 
+                    <a href="register.html" class="text-white hover:text-primary underline decoration-primary/30 underline-offset-4 transition-all hover:decoration-primary">Sign Up</a>
+                </p>
             </div>
-            <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white font-medium py-2.5 rounded-lg transition-all shadow-lg shadow-blue-500/20">Sign In</button>
-        </form>
-        
-        <div class="mt-6 pt-4 border-t border-border text-center">
-            <p class="text-sm text-gray-500">
-                Don't have an account? 
-                <a href="register.html" class="text-primary hover:underline font-medium">Sign Up</a>
-            </p>
         </div>
     </div>
 
     <script>
+        // Entrance Animation
+        window.addEventListener('load', () => {
+            const card = document.getElementById('main-card');
+            card.classList.remove('opacity-0', 'translate-y-10');
+            card.classList.add('opacity-100', 'translate-y-0');
+        });
+
+        // Background Particles
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+            draw() {
+                ctx.fillStyle = `rgba(59, 130, 246, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 100; i++) particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        initParticles();
+        animate();
+
+        // Parallax Effect
+        const card = document.getElementById('main-card');
+        const container = document.getElementById('login-card-container');
+
+        container.addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+            card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+
+        container.addEventListener('mouseenter', () => {
+            card.classList.remove('floating'); // Stop floating while moving mouse
+            card.style.transition = 'none';
+        });
+
+        container.addEventListener('mouseleave', () => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.transform = `rotateY(0deg) rotateX(0deg)`;
+            card.classList.add('floating');
+        });
+
+        // Form Logic
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error-msg');
+            
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = 'Signing in...';
+            btn.disabled = true;
+
             try {
                 const res = await fetch(window.location.origin + '/auth/login', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password })
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
                 if (res.ok) {
                     localStorage.setItem('token', data.access_token);
                     window.location.href = '/dashboard.html';
                 } else {
-                    document.getElementById('error-msg').innerText = data.detail || 'Login failed';
-                    document.getElementById('error-msg').classList.remove('hidden');
+                    errorDiv.innerText = data.detail || 'Login failed';
+                    errorDiv.classList.remove('hidden');
+                    btn.innerText = originalText;
+                    btn.disabled = false;
                 }
             } catch (err) {
-                document.getElementById('error-msg').innerText = 'Cannot connect to server';
-                document.getElementById('error-msg').classList.remove('hidden');
+                errorDiv.innerText = 'Cannot connect to server';
+                errorDiv.classList.remove('hidden');
+                btn.innerText = originalText;
+                btn.disabled = false;
             }
         });
     </script>

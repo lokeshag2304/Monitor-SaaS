@@ -11,6 +11,11 @@ def standardize_url(url: str) -> str:
     url = url.strip()
     if not url:
         return ""
+        
+    # If no dot and no protocol, assume it's a domain name and append .com
+    if "." not in url and not url.startswith(("http://", "https://")):
+        url = url + ".com"
+        
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
     return url.rstrip("/")
@@ -70,46 +75,53 @@ async def run_pagespeed_check(url: str):
     # 1. Start with the basic check for status and baseline score
     basic = await get_basic_performance(url)
     if basic["status"] == "DOWN":
-        return basic
+        # Even if down, try standardize and check if reachalbe
+        pass # Handle below
     
     # 2. Try to augment with Google PageSpeed for FCP and deeper score if possible
     # But only if basic check says the site is reachable
     url_norm = standardize_url(url)
-    # We'll skip Google API here to save on quota per request unless explicitly desired
-    # but the user wanted "Score (0-100), Load Time, Status, Last Checked".
-    # I'll stick to basic check primarily as it's faster and fulfills the requirement of "Basic performance score"
-    # and use Google API as an optional enhancement if key is provided.
     
+    # Try Google API (works without key too, with lower limits)
+    api_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url_norm}&category=performance"
     if PAGESPEED_API_KEY:
-        api_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url_norm}&category=performance&key={PAGESPEED_API_KEY}"
-        try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.get(api_url)
-                if response.status_code == 200:
-                    data = response.json()
-                    lighthouse = data.get("lighthouseResult", {})
-                    perf_score = lighthouse.get("categories", {}).get("performance", {}).get("score", 0) * 100
-                    fcp = lighthouse.get("audits", {}).get("first-contentful-paint", {}).get("numericValue", 0)
-                    
-                    # Update with richer data
-                    basic["score"] = int(perf_score)
-                    basic["fcp"] = fcp
-        except:
-            pass # Fallback to basic data is fine
+        api_url += f"&key={PAGESPEED_API_KEY}"
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(api_url)
+            if response.status_code == 200:
+                data = response.json()
+                lighthouse = data.get("lighthouseResult", {})
+                perf_score = lighthouse.get("categories", {}).get("performance", {}).get("score", 0) * 100
+                fcp = lighthouse.get("audits", {}).get("first-contentful-paint", {}).get("numericValue", 0)
+                
+                # Update with richer data
+                basic["score"] = int(perf_score)
+                basic["fcp"] = fcp
+                basic["success"] = True
+                basic["status"] = "UP"
+            elif response.status_code == 400: # Google couldn't fetch it, maybe protocol mismatch
+                # Fallback to basic if we have it
+                pass
+    except:
+        pass # Fallback to basic data is fine
             
     return basic
 
 async def check_all_monitors_pagespeed(db: Session):
     monitors = db.query(Website).filter(Website.status != WebsiteStatus.PAUSED).all()
     for site in monitors:
-        results = await run_pagespeed_check(site.url)
-        # Store result
+        # Explicitly await to ensure it's not a coroutine
+        report = await run_pagespeed_check(site.url)
+        
+        # Store result in DB
         ps_result = PageSpeedResult(
             monitor_id=site.id,
-            score=results["score"],
-            load_time=results["load_time"],
-            status=results["status"],
-            fcp=results.get("fcp"),
+            score=report.get("score", 0),
+            load_time=report.get("load_time", 0),
+            status=report.get("status", "UP"),
+            fcp=report.get("fcp"),
             checked_at=datetime.utcnow()
         )
         db.add(ps_result)

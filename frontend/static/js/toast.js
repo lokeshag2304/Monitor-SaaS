@@ -50,3 +50,4 @@ window.showSuccess = (msg) => ToastProvider.show(msg, 'success');
 window.showError = (msg) => ToastProvider.show(msg, 'error');
 window.showWarning = (msg) => ToastProvider.show(msg, 'warning');
 window.showInfo = (msg) => ToastProvider.show(msg, 'info');
+window.showToast = (msg, type = 'success') => ToastProvider.show(msg, type);

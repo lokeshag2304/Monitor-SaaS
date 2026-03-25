@@ -1,503 +1,192 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MoniFy-Ping — Incidents</title>
+  <title>Incidents - MoniFy-Ping</title>
   <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="/static/css/custom.css">
-  <style>
-    :root {
-      --accent-ongoing: #ef4444;
-      --accent-resolved: #22c55e;
-      --accent-warning: #eab308;
+  <link rel="stylesheet" href="/static/css/dashboard_premium.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
+          colors: {
+            bg: '#070b14', border: 'rgba(255,255,255,0.05)', primary: '#3b82f6'
+          }
+        }
+      }
     }
-
-    .incident-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .stat-card-premium {
-      background: rgba(8, 14, 30, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .stat-card-premium:hover {
-      background: rgba(8, 14, 30, 0.6);
-      border-color: rgba(255, 255, 255, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .stat-card-premium i {
-      width: 24px;
-      height: 24px;
-      margin-bottom: 12px;
-      opacity: 0.8;
-    }
-
-    .stat-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-dim);
-      margin-bottom: 8px;
-    }
-
-    .stat-value {
-      font-size: 28px;
-      font-weight: 800;
-      color: #fff;
-    }
-
-    .main-layout {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 24px;
-    }
-
-    .incident-table-container {
-      background: rgba(8, 14, 30, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    .table-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .search-filter-bar {
-      display: flex;
-      gap: 12px;
-      padding: 16px 24px;
-      background: rgba(255, 255, 255, 0.01);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    }
-
-    .search-box {
-      flex: 1;
-      position: relative;
-    }
-
-    .search-box i {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-dim);
-      width: 16px;
-    }
-
-    .search-input {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 10px 12px 10px 36px;
-      color: #fff;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-
-    .search-input:focus {
-      outline: none;
-      border-color: var(--primary);
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .filter-select {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 0 12px;
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
-      min-width: 140px;
-    }
-
-    .incidents-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .incidents-table th {
-      text-align: left;
-      padding: 14px 24px;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-dim);
-      font-weight: 700;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .incidents-table td {
-      padding: 16px 24px;
-      font-size: 14px;
-      color: #e2e8f0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    }
-
-    .incidents-table tr:hover {
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 100px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .status-ongoing { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-    .status-resolved { background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); }
-
-    .change-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .change-down { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-    .change-up { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
-
-    .chart-panel {
-      background: rgba(8, 14, 30, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      height: fit-content;
-    }
-
-    .chart-header {
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 20px;
-    }
-
-    .chart-container {
-      position: relative;
-      width: 100%;
-      height: 200px;
-      margin-bottom: 20px;
-    }
-
-    .chart-legend {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .legend-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-    }
-
-    .legend-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-dim);
-    }
-
-    .legend-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    .duration-pills {
-      display: flex;
-      gap: 4px;
-      margin-top: 4px;
-    }
-
-    .pill {
-      height: 4px;
-      width: 12px;
-      border-radius: 2px;
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .pill.active-warning { background: var(--accent-warning); }
-    .pill.active-danger { background: var(--accent-ongoing); }
-
-    /* Timeline Styles */
-    .timeline {
-      position: relative;
-      padding-left: 32px;
-    }
-    .timeline::before {
-      content: '';
-      position: absolute;
-      left: 11px;
-      top: 0;
-      bottom: 0;
-      width: 2px;
-      background: rgba(255, 255, 255, 0.08);
-    }
-    .timeline-item {
-      position: relative;
-      margin-bottom: 32px;
-    }
-    .timeline-item::before {
-      content: '';
-      position: absolute;
-      left: -26px;
-      top: 4px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--bg-deep);
-      border: 2px solid var(--primary);
-      z-index: 1;
-    }
-    .timeline-item.down::before { border-color: var(--accent-ongoing); }
-    .timeline-item.up::before { border-color: var(--accent-resolved); }
-    
-    .timeline-time {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .timeline-msg {
-      font-size: 14px;
-      color: #fff;
-      background: rgba(255, 255, 255, 0.03);
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .empty-incidents {
-      padding: 80px 40px;
-      text-align: center;
-    }
-
-    .empty-icon {
-      width: 64px;
-      height: 64px;
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 20px;
-      color: var(--text-dim);
-    }
-
-    /* Custom Scrollbar for the table */
-    .premium-scroll::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .premium-scroll::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 10px;
-    }
-    .premium-scroll::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      transition: all 0.3s;
-    }
-    .premium-scroll::-webkit-scrollbar-thumb:hover {
-      background: var(--primary);
-    }
-    
-    .top-scroll-wrapper {
-      overflow-x: auto;
-      overflow-y: hidden;
-      height: 12px;
-      margin-bottom: 2px;
-      background: transparent;
-    }
-    .top-scroll-content {
-      height: 1px;
-    }
-  </style>
+  </script>
 </head>
-<body>
+<body class="bg-bg text-gray-300">
 
-<div class="bg-orb bg-orb-1"></div>
-<div class="bg-orb bg-orb-2"></div>
+<div class="app-shell flex h-screen overflow-hidden">
+  
+  <!-- Sidebar Inject -->
+  <div id="sidebar-container" class="flex-shrink-0"></div>
 
-<div class="app-shell">
-  <div id="sidebar-container"></div>
-
-  <main class="main-content">
-    <header class="top-header">
-      <div class="header-left">
-        <h1 class="header-title">Incidents</h1>
-        <p style="font-size:13px; color:var(--text-dim); margin-left:4px;">Real-time incident tracking</p>
+  <!-- Main Area -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    
+    <!-- Top Navbar -->
+    <header class="top-header flex items-center justify-between z-10">
+      <div class="flex items-center gap-4">
+        <h1 class="header-title font-bold text-white text-2xl">Incidents</h1>
+        <span id="admin-badge" class="badge-admin py-1 px-3 rounded-full text-[10px] font-bold tracking-widest uppercase">SUPER ADMIN</span>
       </div>
-      <div>
-        <button class="btn btn-glass" onclick="loadIncidents()"><i data-lucide="refresh-cw"></i> Refresh</button>
+      <div class="flex items-center gap-4">
+        <button id="theme-toggle" class="theme-btn w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5" title="Toggle theme">
+          <i id="theme-toggle-dark-icon" data-lucide="moon" class="w-4 h-4"></i>
+          <i id="theme-toggle-light-icon" data-lucide="sun" class="w-4 h-4" style="color:#eab308;display:none;"></i>
+        </button>
+        <button onclick="loadIncidents()" class="btn-glass flex items-center gap-2 font-semibold">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+        </button>
       </div>
     </header>
 
-    <div style="padding: 0 26px 24px;">
-      <!-- TOP STATS -->
-      <div class="incident-stats-grid">
-        <div class="stat-card-premium">
-          <i data-lucide="alert-triangle" style="color:var(--accent-warning);"></i>
-          <span class="stat-label">Total Incidents</span>
-          <span class="stat-value" id="stats-total">--</span>
-        </div>
-        <div class="stat-card-premium">
-          <i data-lucide="activity" style="color:var(--accent-ongoing);"></i>
-          <span class="stat-label">Ongoing</span>
-          <span class="stat-value" id="stats-ongoing">--</span>
-        </div>
-        <div class="stat-card-premium">
-          <i data-lucide="check-circle" style="color:var(--accent-resolved);"></i>
-          <span class="stat-label">Resolved</span>
-          <span class="stat-value" id="stats-resolved">--</span>
-        </div>
-        <div class="stat-card-premium">
-          <i data-lucide="clock" style="color:var(--primary);"></i>
-          <span class="stat-label">Avg Duration</span>
-          <span class="stat-value" id="stats-avg">--</span>
-        </div>
-      </div>
+    <!-- Content Area Scrollable -->
+    <div class="flex-1 overflow-y-auto p-8 relative">
+      
+      <!-- Ambient Lights -->
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-red-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 -z-10"></div>
+      <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2 -z-10"></div>
 
-      <div class="main-layout">
-        <!-- LEFT TABLE -->
-        <div class="incident-table-container">
-          <div class="search-filter-bar">
-            <div class="search-box">
-              <i data-lucide="search"></i>
-              <input type="text" id="incident-search" class="search-input" placeholder="Search monitor...">
-            </div>
-            <select id="status-filter" class="filter-select">
-              <option value="">All Statuses</option>
-              <option value="ongoing">Ongoing</option>
-            </select>
-          </div>
+      <div class="max-w-[1400px] mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
-          <!-- TOP HORIZONTAL SCROLLBAR -->
-          <div class="top-scroll-wrapper premium-scroll" id="top-scroll-wrapper" style="padding: 0 24px;">
-            <div class="top-scroll-content" id="top-scroll-content"></div>
+          <!-- Column 1-3: Main Incidents List -->
+          <div class="lg:col-span-3 space-y-8">
+            
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="premium-panel p-6 text-center group">
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Total</div>
+                    <div class="text-3xl font-extrabold text-white" id="stats-total">0</div>
+                </div>
+                <div class="premium-panel p-6 text-center group">
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Ongoing</div>
+                    <div class="text-3xl font-extrabold text-red-500" id="stats-ongoing">0</div>
+                </div>
+                <div class="premium-panel p-6 text-center group">
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Resolved</div>
+                    <div class="text-3xl font-extrabold text-green-500" id="stats-resolved">0</div>
+                </div>
+                <div class="premium-panel p-6 text-center group">
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Avg Duration</div>
+                    <div class="text-xl font-extrabold text-white pt-1" id="stats-avg">--</div>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="premium-panel overflow-hidden">
+                <div class="p-6 border-b border-white/5 flex flex-wrap items-center justify-between gap-4">
+                    <div class="relative flex-1 min-w-[200px]">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                        <input type="text" id="incident-search" placeholder="Search incidents..." class="w-full bg-white/5 border border-white/5 rounded-xl py-2.5 pl-11 pr-4 text-sm text-white focus:border-primary outline-none transition-all placeholder:text-gray-600">
+                    </div>
+                    <select id="status-filter" class="bg-white/5 border border-white/5 text-gray-400 rounded-xl px-4 py-2.5 text-sm focus:border-primary outline-none cursor-pointer">
+                        <option value="">All States</option>
+                        <option value="ongoing">Ongoing</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left" id="main-incidents-table">
+                        <thead class="bg-white/[0.02] text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+                            <tr>
+                                <th class="px-6 py-4">Monitor</th>
+                                <th class="px-6 py-4 text-center">Event</th>
+                                <th class="px-6 py-4 text-center">State</th>
+                                <th class="px-6 py-4">Timeline</th>
+                                <th class="px-6 py-4">Duration</th>
+                                <th class="px-6 py-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incidents-tbody" class="divide-y divide-white/5">
+                            <!-- Injected -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="incidents-loader" class="p-16 text-center hidden">
+                    <div class="animate-spin inline-block"><i data-lucide="loader" class="text-primary w-8 h-8"></i></div>
+                </div>
+
+                <div id="incidents-empty" class="p-16 text-center hidden flex flex-col items-center">
+                    <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
+                        <i data-lucide="shield-check" class="text-gray-600 w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-white font-bold">No Incidents Found</h3>
+                    <p class="text-gray-500 text-sm max-w-xs">Your system is running exceptionally smooth!</p>
+                </div>
+            </div>
+
           </div>
 
-          <!-- TABLE WITH VERTICAL + BOTTOM HORIZONTAL SCROLLBAR -->
-          <div class="premium-scroll" id="table-scroll-container" style="max-height: 320px; overflow-y: auto; overflow-x: auto;">
-            <table class="incidents-table" id="main-incidents-table">
-              <thead>
-                <tr>
-                  <th>Monitor</th>
-                  <th>Status Change</th>
-                  <th>State</th>
-                  <th>Started At</th>
-                  <th>Resolved At</th>
-                  <th>Duration</th>
-                  <th style="min-width:220px;">Reason</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="incidents-tbody">
-                <!-- Data injected here -->
-              </tbody>
-            </table>
+          <!-- Column 4: Side Stats -->
+          <div class="space-y-8">
+                <div class="premium-panel p-8">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-6">Incident Summary</h3>
+                    <div class="h-48 relative mb-8">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                             <span class="text-xs font-bold text-gray-400">System Health</span>
+                             <span class="text-green-500 font-extrabold" id="health-pct">--%</span>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- HISTORY MODAL -->
-            <div id="history-modal" class="modal-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(8px);">
-              <div class="modal-content" style="background:var(--bg-deep); border:1px solid rgba(255,255,255,0.1); border-radius:24px; width:100%; max-width:550px; overflow:hidden; animation:slideUp 0.3s ease;">
-                <div style="padding:24px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02);">
-                  <div>
-                    <h2 id="modal-title" style="margin:0; font-size:18px; color:#fff;">Incident History</h2>
-                    <p id="modal-subtitle" style="margin:4px 0 0; font-size:13px; color:var(--text-dim);">Detailed timeline of checks</p>
-                  </div>
-                  <button onclick="closeHistory()" style="background:rgba(255,255,255,0.05); border:none; padding:8px; border-radius:10px; color:#fff; cursor:pointer;"><i data-lucide="x"></i></button>
+                <div class="premium-panel p-8">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-4">Proactive Tips</h3>
+                    <div class="text-xs text-gray-500 leading-relaxed font-medium">
+                        Set up multiple check locations to reduce false positives and get better insight into global incidents.
+                    </div>
                 </div>
-                <div style="padding:32px; max-height:60vh; overflow-y:auto;" id="timeline-content">
-                  <!-- Timeline items here -->
-                </div>
-                <div style="padding:16px 24px; border-top:1px solid rgba(255,255,255,0.06); text-align:right;">
-                  <button onclick="closeHistory()" class="btn btn-glass">Close History</button>
-                </div>
-              </div>
-            </div>
-            <div id="incidents-loader" style="display:none; padding: 40px; text-align:center;">
-              <i data-lucide="loader" class="animate-spin" style="width:32px; height:32px; color:var(--primary); margin:0 auto;"></i>
-            </div>
-            <div id="incidents-empty" class="empty-incidents" style="display:none;">
-              <div class="empty-icon"><i data-lucide="shield-check" style="width:32px; height:32px;"></i></div>
-              <h3 style="color:#fff; margin-bottom:8px;">No Incidents Found</h3>
-              <p style="color:var(--text-dim);">Your systems are running smooth!</p>
-            </div>
           </div>
-        </div>
 
-        <!-- RIGHT CHART -->
-        <div class="chart-panel">
-          <h3 class="chart-header">Incident Status</h3>
-          <div class="chart-container">
-            <canvas id="statusChart"></canvas>
-          </div>
-          <div class="chart-legend">
-            <div class="legend-item">
-              <div class="legend-label">
-                <span class="legend-dot" style="background:#ef4444;"></span> Ongoing
-              </div>
-              <span id="chart-ongoing-count" style="color:#fff; font-weight:700;">--</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-label">
-                <span class="legend-dot" style="background:#22c55e;"></span> Resolved
-              </div>
-              <span id="chart-resolved-count" style="color:#fff; font-weight:700;">--</span>
-            </div>
-          </div>
-          
-          <!-- SUMMARY PILL -->
-          <div style="margin-top:auto; padding-top:24px; border-top:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); border-radius:12px; padding:12px 16px;">
-                <span style="font-size:12px; color:var(--text-dim); font-weight:600;">System Health</span>
-                <span id="health-pct" style="font-size:14px; font-weight:800; color:var(--accent-resolved);">--%</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
+
   </main>
 </div>
 
-<script src="/static/js/app.js"></script>
+<!-- History Modal -->
+<div id="history-modal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(10px);">
+    <div class="premium-panel p-8 w-full max-w-[600px] animate-slide-up">
+        <div class="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
+            <div>
+                <h2 id="modal-title" class="text-xl font-bold text-white">Incident History</h2>
+                <p class="text-xs text-gray-500 font-medium">Detailed event log for this monitor.</p>
+            </div>
+            <button onclick="closeHistory()" class="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all text-gray-500 hover:text-white">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <div id="timeline-content" class="max-height overflow-y-auto pr-4 space-y-6">
+            <!-- Timeline items -->
+        </div>
+        <div class="mt-8 pt-6 border-t border-white/5 text-right">
+            <button onclick="closeHistory()" class="btn-glass px-8">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/toast.js"></script>
 <script>
 (function() {
   const API_URL = window.location.origin;
@@ -511,8 +200,8 @@
       const empty = document.getElementById('incidents-empty');
       
       tbody.innerHTML = '';
-      loader.style.display = 'block';
-      empty.style.display = 'none';
+      loader.classList.remove('hidden');
+      empty.classList.add('hidden');
 
       try {
           const res = await fetch(`${API_URL}/api/incidents/`, {
@@ -528,9 +217,9 @@
           
       } catch (err) {
           console.error('Failed to load incidents:', err);
-          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load incidents. Please try again.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="p-16 text-center text-red-400 font-bold">Connectivity Error. Please retry.</td></tr>`;
       } finally {
-          loader.style.display = 'none';
+          loader.classList.add('hidden');
       }
   }
 
@@ -538,10 +227,7 @@
     document.getElementById('stats-total').innerText = stats.total;
     document.getElementById('stats-ongoing').innerText = stats.ongoing;
     document.getElementById('stats-resolved').innerText = stats.resolved;
-    document.getElementById('stats-avg').innerText = stats.avg_duration;
-    
-    document.getElementById('chart-ongoing-count').innerText = stats.ongoing;
-    document.getElementById('chart-resolved-count').innerText = stats.resolved;
+    document.getElementById('stats-avg').innerText = stats.avg_duration || '--';
     
     const health = stats.total > 0 ? Math.round((stats.resolved / stats.total) * 100) : 100;
     document.getElementById('health-pct').innerText = `${health}%`;
@@ -553,70 +239,49 @@
     
     if (!incidents || incidents.length === 0) {
         tbody.innerHTML = '';
-        empty.style.display = 'block';
+        empty.classList.remove('hidden');
         return;
     }
 
-    empty.style.display = 'none';
+    empty.classList.add('hidden');
     tbody.innerHTML = incidents.map(inc => {
         const isOngoing = inc.state === 'Ongoing';
-        const stateClass = isOngoing ? 'status-ongoing' : 'status-resolved';
-        const changeClass = inc.status_change === 'DOWN' ? 'change-down' : 'change-up';
-        const changeIcon = inc.status_change === 'DOWN' ? 'heart' : 'arrow-up-circle';
-        const barColor = isOngoing ? '#ef4444' : '#22c55e';
+        const stateColor = isOngoing ? 'text-red-500' : 'text-green-500';
+        const bgColor = isOngoing ? 'bg-red-500/10' : 'bg-green-500/10';
+        const borderStatus = isOngoing ? 'border-l-4 border-red-500' : 'border-l-4 border-green-500';
         
         const startedAt = formatDate(inc.started_at);
-        const resolvedAt = inc.resolved_at ? formatDate(inc.resolved_at) : 'Ongoing';
-        
-        // Generate duration pills for premium look
-        let pills = '';
-        if (inc.state === 'Resolved') {
-            const level = Math.min(6, Math.max(1, Math.ceil(inc.duration_seconds / 3600)));
-            for(let i=0; i<6; i++) {
-                pills += `<div class="pill ${i < level ? 'active-warning' : ''}"></div>`;
-            }
-        } else {
-            // Animated pills for ongoing
-            for(let i=0; i<6; i++) {
-                pills += `<div class="pill" style="background:#ef4444; opacity:${0.2 + (i * 0.1)};"></div>`;
-            }
-        }
+        const resolvedAt = inc.resolved_at ? formatDate(inc.resolved_at) : 'Active';
 
         return `
-            <tr>
-                <td style="border-left: 3px solid ${barColor};">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div style="width:28px; height:28px; background:rgba(255,255,255,0.05); border-radius:6px; display:flex; align-items:center; justify-content:center;">
-                            <i data-lucide="globe" style="width:16px; height:16px; color:var(--text-dim);"></i>
+            <tr class="hover:bg-white/[0.02] transition-colors group">
+                <td class="px-6 py-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-primary transition-colors">
+                            <i data-lucide="activity" class="w-4 h-4"></i>
                         </div>
                         <div>
-                            <div style="font-weight:700; color:#fff; font-size:14px;">${inc.monitor_name}</div>
-                            <div style="font-size:11px; color:var(--text-dim);">System Monitor</div>
+                            <div class="text-sm font-bold text-white">${inc.monitor_name}</div>
+                            <div class="text-[10px] text-gray-500 uppercase tracking-tighter">Monitoring Event</div>
                         </div>
                     </div>
                 </td>
-                <td>
-                    <div class="change-badge ${changeClass}">
-                        <i data-lucide="${inc.status_change === 'DOWN' ? 'heart' : 'arrow-up-circle'}" style="width:10px; height:10px;"></i>
-                        ${inc.status_change}
-                    </div>
+                <td class="px-6 py-5 text-center">
+                    <span class="text-[10px] font-bold ${inc.status_change === 'DOWN' ? 'text-red-400' : 'text-green-400'} uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">${inc.status_change}</span>
                 </td>
-                <td><span class="status-badge ${stateClass}" style="padding: 4px 12px; font-weight:700;">${inc.state}</span></td>
-                <td style="font-size:13px; color:var(--text-dim);">${startedAt}</td>
-                <td style="font-size:13px; color:var(--text-dim);">${resolvedAt}</td>
-                <td>
-                    <div>
-                        <div style="font-weight:800; color:#fff;">${inc.duration}</div>
-                        <div class="duration-pills">${pills}</div>
-                    </div>
+                <td class="px-6 py-5 text-center">
+                    <span class="text-[10px] font-bold ${stateColor} uppercase tracking-widest ${bgColor} px-3 py-1 rounded-full">${inc.state}</span>
                 </td>
-                <td style="font-size:12px; color:var(--text-dim); min-width:220px; white-space:normal; line-height:1.4;" title="${inc.reason}">
-                    ${inc.reason}
+                <td class="px-6 py-5">
+                    <div class="text-xs font-medium text-white">${startedAt}</div>
+                    <div class="text-[10px] text-gray-500">${resolvedAt === 'Active' ? '<span class="text-red-500 animate-pulse">● Live Now</span>' : 'to ' + resolvedAt}</div>
                 </td>
-                <td>
-                    <button class="btn btn-glass" style="padding: 6px 12px; font-size:12px;" onclick="showHistory(${inc.id})">
-                        <i data-lucide="history" style="width:14px; vertical-align:-3px;"></i> History
-                    </button>
+                <td class="px-6 py-5">
+                    <div class="text-xs font-bold text-white">${inc.duration}</div>
+                    <div class="text-[10px] text-gray-600 truncate max-w-[150px]">${inc.reason || 'No details provided'}</div>
+                </td>
+                <td class="px-6 py-5 text-right">
+                    <button class="btn-glass !py-1.5 text-[10px]" onclick="showHistory(${inc.id})">History</button>
                 </td>
             </tr>
         `;
@@ -633,87 +298,51 @@
 
   function updateChart(stats) {
     const ctx = document.getElementById('statusChart').getContext('2d');
-    
     if (statusChart) statusChart.destroy();
-    
     if (stats.total === 0) {
-        // Show empty doughnut
-        statusChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                datasets: [{
-                    data: [1],
-                    backgroundColor: ['rgba(255,255,255,0.05)'],
-                    borderWidth: 0
-                }]
-            },
-            options: { cutout: '80%', events: [] }
-        });
+        statusChart = new Chart(ctx, { type: 'doughnut', data: { datasets: [{ data: [1], backgroundColor: ['#1e293b'], borderWidth: 0 }] }, options: { cutout: '85%', events: [] } });
         return;
     }
-
     statusChart = new Chart(ctx, {
         type: 'doughnut',
-        data: {
-            labels: ['Ongoing', 'Resolved'],
-            datasets: [{
-                data: [stats.ongoing, stats.resolved],
-                backgroundColor: ['#ef4444', '#22c55e'],
-                hoverOffset: 4,
-                borderWidth: 0,
-                borderRadius: 4
-            }]
-        },
-        options: {
-            cutout: '80%',
-            plugins: {
-                legend: { display: false }
-            }
-        }
+        data: { datasets: [{ data: [stats.ongoing, stats.resolved], backgroundColor: ['#ef4444', '#22c55e'], borderWidth: 0, borderRadius: 10 }] },
+        options: { cutout: '85%', plugins: { tooltip: { enabled: true }, legend: { display: false } } }
     });
   }
 
-  // Handle Search & Filter
-  function applyFilters() {
-      const searchTerm = document.getElementById('incident-search').value.toLowerCase();
-      const statusFilter = document.getElementById('status-filter').value.toLowerCase();
-      
-      const filtered = allIncidents.filter(inc => {
-          const matchesSearch = inc.monitor_name.toLowerCase().includes(searchTerm);
-          const matchesStatus = !statusFilter || inc.state.toLowerCase() === statusFilter;
-          return matchesSearch && matchesStatus;
-      });
-      
+  document.getElementById('incident-search').addEventListener('input', () => {
+      const term = document.getElementById('incident-search').value.toLowerCase();
+      const filtered = allIncidents.filter(i => i.monitor_name.toLowerCase().includes(term));
       renderTable(filtered);
-  }
+  });
 
-  document.getElementById('incident-search').addEventListener('input', applyFilters);
-  document.getElementById('status-filter').addEventListener('change', applyFilters);
+  document.getElementById('status-filter').addEventListener('change', () => {
+      const status = document.getElementById('status-filter').value.toLowerCase();
+      const filtered = allIncidents.filter(i => !status || i.state.toLowerCase() === status);
+      renderTable(filtered);
+  });
 
   window.showHistory = function(id) {
     const inc = allIncidents.find(i => i.id === id);
     if(!inc) return;
-
     const modal = document.getElementById('history-modal');
     const content = document.getElementById('timeline-content');
-    
-    document.getElementById('modal-title').innerText = `Timeline: ${inc.monitor_name}`;
+    document.getElementById('modal-title').innerText = inc.monitor_name;
     
     if(!inc.updates || inc.updates.length === 0) {
-        content.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-dim);">No detailed logs available for this incident.</div>`;
+        content.innerHTML = `<div class="p-10 text-center text-gray-600 text-sm">No detailed timeline logs found for this event.</div>`;
     } else {
-        content.innerHTML = `
-            <div class="timeline">
-                ${inc.updates.map(u => `
-                    <div class="timeline-item ${u.status.toLowerCase()}">
-                        <div class="timeline-time">${formatDate(u.timestamp)}</div>
-                        <div class="timeline-msg">${u.message}</div>
-                    </div>
-                `).join('')}
+        content.innerHTML = inc.updates.map(u => `
+            <div class="relative pl-10">
+                <div class="absolute left-0 top-1 w-2 h-2 rounded-full ${u.status === 'UP' ? 'bg-green-500' : 'bg-red-500'} shadow-lg"></div>
+                ${u !== inc.updates[inc.updates.length-1] ? '<div class="absolute left-[3px] top-4 w-[2px] bottom-[-24px] bg-white/5"></div>' : ''}
+                <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">${formatDate(u.timestamp)}</div>
+                <div class="bg-white/5 p-4 rounded-xl border border-white/5 text-sm text-gray-300">
+                    ${u.message}
+                </div>
             </div>
-        `;
+        `).join('');
     }
-
     modal.style.display = 'flex';
     lucide.createIcons();
   };
@@ -721,38 +350,6 @@
   window.closeHistory = function() {
     document.getElementById('history-modal').style.display = 'none';
   };
-
-  // Dual Scroll Synchronization
-  function syncDualScroll() {
-    const topWrapper = document.getElementById('top-scroll-wrapper');
-    const topContent = document.getElementById('top-scroll-content');
-    const tableContainer = document.getElementById('table-scroll-container');
-    const tableInstance = document.getElementById('main-incidents-table');
-
-    if (!topWrapper || !tableContainer || !tableInstance) return;
-
-    // Set top scroll width to match table width
-    topContent.style.width = tableInstance.offsetWidth + 'px';
-
-    // Sync from Top to Bottom
-    topWrapper.onscroll = function() {
-      tableContainer.scrollLeft = topWrapper.scrollLeft;
-    };
-
-    // Sync from Bottom to Top
-    tableContainer.onscroll = function() {
-      topWrapper.scrollLeft = tableContainer.scrollLeft;
-    };
-  }
-
-  // Run sync whenever table is rendered or window resized
-  window.addEventListener('resize', syncDualScroll);
-  
-  const originalRenderTable = renderTable;
-  renderTable = function(incidents) {
-    originalRenderTable(incidents);
-    setTimeout(syncDualScroll, 100); // Small delay to let DOM update
-  }
 
   document.addEventListener('DOMContentLoaded', loadIncidents);
   window.loadIncidents = loadIncidents;

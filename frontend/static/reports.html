@@ -3,508 +3,223 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reports — MoniFy-Ping</title>
-  <link rel="stylesheet" href="/static/css/custom.css">
+  <title>Reports - MoniFy-Ping</title>
+  <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    /* PREMIUM REPORTS UI STYLES */
-    :root {
-      --accent-uptime: #22c55e;
-      --accent-response: #3b82f6;
-      --accent-checks: #f59e0b;
-      --accent-downtime: #ef4444;
-      --bg-glass: rgba(8, 14, 30, 0.65);
-      --border-glass: rgba(255, 255, 255, 0.08);
-      --glow-uptime: 0 0 20px rgba(34, 197, 94, 0.15);
-      --glow-response: 0 0 20px rgba(59, 130, 246, 0.15);
+  <link rel="stylesheet" href="/static/css/custom.css">
+  <link rel="stylesheet" href="/static/css/dashboard_premium.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
+          colors: {
+            bg: '#070b14', border: 'rgba(255,255,255,0.05)', primary: '#3b82f6'
+          }
+        }
+      }
     }
-
-    .reports-layout {
-      padding: 24px 32px;
-      height: 100vh;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    /* Header & Filters */
-    .reports-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-    }
-
-    .reports-controls {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .control-group {
-      background: var(--bg-glass);
-      border: 1px solid var(--border-glass);
-      border-radius: 12px;
-      padding: 6px 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .control-group span {
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff;
-    }
-
-    .control-label {
-      font-size: 10px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      font-weight: 700;
-      display: block;
-    }
-
-    /* Stats Grid */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
-
-    .stat-card {
-      background: var(--bg-glass);
-      border: 1px solid var(--border-glass);
-      border-radius: 20px;
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-    }
-
-    .stat-card::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      opacity: 0.5;
-    }
-
-    .stat-card.uptime::after { background: var(--accent-uptime); box-shadow: 0 0 15px var(--accent-uptime); }
-    .stat-card.response::after { background: var(--accent-response); box-shadow: 0 0 15px var(--accent-response); }
-    .stat-card.checks::after { background: var(--accent-checks); box-shadow: 0 0 15px var(--accent-checks); }
-    .stat-card.downtime::after { background: var(--accent-downtime); box-shadow: 0 0 15px var(--accent-downtime); }
-
-    .stat-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 12px;
-    }
-
-    .uptime .stat-icon { background: rgba(34, 197, 94, 0.1); color: var(--accent-uptime); }
-    .response .stat-icon { background: rgba(59, 130, 246, 0.1); color: var(--accent-response); }
-    .checks .stat-icon { background: rgba(245, 158, 11, 0.1); color: var(--accent-checks); }
-    .downtime .stat-icon { background: rgba(239, 68, 68, 0.1); color: var(--accent-downtime); }
-
-    .stat-val { font-size: 28px; font-weight: 800; color: #fff; line-height: 1.2; }
-    .stat-label { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; margin-bottom: 2px; }
-    .stat-diff { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
-    .stat-diff.up { color: var(--accent-uptime); }
-    .stat-diff.down { color: var(--accent-downtime); }
-
-    /* Charts Section */
-    .charts-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    .chart-box {
-      background: var(--bg-glass);
-      border: 1px solid var(--border-glass);
-      border-radius: 20px;
-      padding: 24px;
-      height: 320px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .chart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .chart-title { font-size: 15px; font-weight: 700; color: #fff; }
-    .chart-meta { font-size: 12px; color: var(--text-muted); }
-
-    /* Performance Table */
-    .performance-row {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 20px;
-    }
-
-    .data-table-container {
-      background: var(--bg-glass);
-      border: 1px solid var(--border-glass);
-      border-radius: 20px;
-      padding: 0;
-      overflow: hidden;
-    }
-
-    .table-header-box {
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--border-glass);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .report-table { width: 100%; border-collapse: collapse; }
-    .report-table th { 
-      padding: 16px 24px; text-align: left; font-size: 11px; font-weight: 700; 
-      color: var(--text-dim); text-transform: uppercase; border-bottom: 1px solid var(--border-glass);
-    }
-    .report-table td { padding: 16px 24px; font-size: 13px; color: #fff; border-bottom: 1px solid var(--border-glass); }
-    .report-table tr:last-child td { border-bottom: none; }
-
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-    .status-dot.up { background: var(--accent-uptime); box-shadow: 0 0 8px var(--accent-uptime); }
-    .status-dot.down { background: var(--accent-downtime); box-shadow: 0 0 8px var(--accent-downtime); }
-
-    .shimmer-cell { position: relative; width: 60px; height: 30px; }
-
-    /* Incidents List */
-    .incidents-panel {
-      background: var(--bg-glass);
-      border: 1px solid var(--border-glass);
-      border-radius: 20px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .incident-item {
-      display: flex;
-      gap: 12px;
-      padding: 12px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.025);
-      border: 1px solid var(--border-glass);
-      transition: all 0.2s;
-    }
-
-    .incident-item:hover { background: rgba(255, 255, 255, 0.05); }
-
-    .incident-icon { 
-      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; 
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(239, 68, 68, 0.1); color: var(--accent-downtime);
-    }
-    .incident-icon.resolved { background: rgba(34, 197, 94, 0.1); color: var(--accent-uptime); }
-
-    .incident-body { flex: 1; min-width: 0; }
-    .incident-name { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 2px; }
-    .incident-meta { font-size: 11px; color: var(--text-dim); }
-
-    .btn-view-all {
-        width: 100%; padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.05);
-        color: #fff; font-size: 12px; font-weight: 700; border: none; cursor: pointer;
-        display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: auto;
-    }
-
-    /* Monitor Dropdown Menu (The Checklist) */
-    .monitor-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      width: 250px;
-      background: #0f172a;
-      border: 1px solid var(--border-glass);
-      border-radius: 12px;
-      margin-top: 8px;
-      z-index: 100;
-      display: none;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      padding: 12px;
-    }
-
-    .monitor-dropdown.show { display: block; }
-
-    .monitor-list-inner { max-height: 300px; overflow-y: auto; padding-right: 4px; }
-    .monitor-list-inner label {
-      display: flex; align-items: center; gap: 10px; padding: 8px;
-      border-radius: 6px; cursor: pointer; transition: background 0.2s;
-      font-size: 13px; color: #e2e8f0;
-    }
-    .monitor-list-inner label:hover { background: rgba(255,255,255,0.05); }
-    .monitor-list-inner input { accent-color: var(--accent-response); }
-
-    /* Footer Exports */
-    .reports-footer {
-        display: flex;
-        justify-content: center;
-        gap: 16px;
-        padding: 32px 0;
-    }
-
-    .export-btn {
-        background: var(--bg-card);
-        border: 1px solid var(--border-glass);
-        padding: 10px 24px;
-        border-radius: 12px;
-        color: #fff;
-        font-size: 13px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    .export-btn:hover { background: rgba(255,255,255,0.05); transform: translateY(-2px); }
-    .export-btn.primary { background: var(--accent-uptime); color: #fff; border: none; }
-
-    .spin { animation: spin 1s linear infinite; }
-    @keyframes spin { from {transform:rotate(0deg);} to {transform:rotate(360deg);} }
-
-    /* CUSTOM RANGE MODAL */
-    .custom-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
-    .custom-modal.flex { display: flex; }
-    .modal-content { background: #0f172a; border-radius: 20px; padding: 32px; width: 400px; border: 1px solid var(--border-glass); }
-
-    .empty-state {
-        grid-column: 1 / -1;
-        height: 60vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-dim);
-    }
-  </style>
+  </script>
 </head>
-<body>
+<body class="bg-bg text-gray-300">
 
-<div class="app-shell">
-  <div id="sidebar-container"></div>
+<div class="app-shell flex h-screen overflow-hidden">
   
-  <div class="main-content">
-    <div class="reports-layout">
-      <!-- HEADER -->
-      <header class="reports-header">
-        <div>
-          <h1 style="font-size:32px; font-weight:900; color:#fff; letter-spacing:-1px;">Reports</h1>
-          <p style="color:var(--text-dim); font-size:14px; font-weight:600;">Analyze Uptime & Performance</p>
-        </div>
-        
-        <div class="reports-controls">
-          <!-- Monitor Multi-Select -->
-          <div class="control-group" id="monitor-select-trigger">
-            <div class="stat-icon" style="margin:0; width:24px; height:24px; background:rgba(34, 197, 94, 0.2);">
-                <i data-lucide="layers" style="width:14px;"></i>
-            </div>
-            <div>
-                <span class="control-label">Monitors</span>
-                <span id="selected-monitors-text">All Monitors</span>
-            </div>
-            <i data-lucide="chevron-down" style="width:14px; color:var(--text-dim);"></i>
-            
-            <div class="monitor-dropdown" id="monitor-dropdown">
-                <div class="monitor-list-inner" id="monitor-checkboxes">
-                    <!-- Loaded via JS -->
-                </div>
-            </div>
-          </div>
+  <!-- Sidebar Inject -->
+  <div id="sidebar-container" class="flex-shrink-0"></div>
 
-          <!-- Time Range -->
-          <div class="control-group">
-            <div class="stat-icon" style="margin:0; width:24px; height:24px; background:rgba(59, 130, 246, 0.2);">
-                <i data-lucide="calendar" style="width:14px;"></i>
-            </div>
-            <div>
-                <span class="control-label">Time Range</span>
-                <select id="time-range-select" class="theme-btn" style="border:none; background:transparent; padding:0; height:auto; font-weight:700; width:120px; color:#fff;">
-                    <option value="1">Last 24 Hours</option>
-                    <option value="7" selected>Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="90">Last 3 Months</option>
-                    <option value="365">Last 1 Year</option>
-                </select>
-            </div>
-          </div>
+  <!-- Main Area -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    
+    <!-- Top Navbar -->
+    <header class="top-header flex items-center justify-between z-10">
+      <div class="flex items-center gap-4">
+        <h1 class="header-title font-bold text-white text-2xl">Reports</h1>
+        <span id="admin-badge" class="badge-admin py-1 px-3 rounded-full text-[10px] font-bold tracking-widest uppercase">SUPER ADMIN</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <button id="theme-toggle" class="theme-btn w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5" title="Toggle theme">
+          <i id="theme-toggle-dark-icon" data-lucide="moon" class="w-4 h-4"></i>
+          <i id="theme-toggle-light-icon" data-lucide="sun" class="w-4 h-4" style="color:#eab308;display:none;"></i>
+        </button>
+        <button class="btn-primary flex items-center gap-2 text-white px-6" id="generate-btn">
+          <i data-lucide="play" class="w-4 h-4"></i> Generate Report
+        </button>
+      </div>
+    </header>
 
-          <button class="export-btn" id="custom-range-btn">
-              <i data-lucide="edit-3"></i> Custom Range
-          </button>
-
-          <button class="btn-primary" id="generate-btn" style="padding:12px 24px; border-radius:12px; font-weight:800; font-size:14px;">
-              Generate Report
-          </button>
-        </div>
-      </header>
-
-      <!-- RESULTS CONTENT (Hidden until generated) -->
-      <div id="report-content" style="display:none; flex-direction:column; gap:24px;">
-          <!-- STAT CARDS -->
-          <div class="stats-row">
-            <div class="stat-card uptime">
-              <div class="stat-label">Overall Uptime</div>
-              <div class="stat-val" id="val-uptime">0%</div>
-              <div class="stat-diff up" id="diff-uptime">
-                  <i data-lucide="arrow-up-right" style="width:12px;"></i> 0.3%
+    <!-- Content Area Scrollable -->
+    <div class="flex-1 overflow-y-auto p-8 relative">
+      
+      <!-- Ambient Lights -->
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2 -z-10"></div>
+      
+      <div class="max-w-[1400px] mx-auto">
+        <div class="space-y-8">
+          
+          <!-- Filters Panel -->
+          <div class="premium-panel p-6 flex flex-wrap items-center gap-6">
+              <div class="flex-1 min-w-[250px] space-y-2">
+                  <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest pl-1">Target Monitors</label>
+                  <div class="relative group">
+                      <div class="bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-white/10 transition-all" id="monitor-select-trigger">
+                          <span id="selected-monitors-text" class="text-sm font-bold text-white truncate pr-4">All Monitors</span>
+                          <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
+                      </div>
+                      <div class="absolute top-full left-0 w-full mt-2 bg-[#0f172a] border border-white/10 rounded-xl p-4 shadow-2xl z-50 hidden" id="monitor-dropdown">
+                          <div class="max-h-60 overflow-y-auto pr-2 space-y-1" id="monitor-checkboxes"></div>
+                      </div>
+                  </div>
               </div>
-            </div>
-            <div class="stat-card response">
-              <div class="stat-label">Avg Response Time</div>
-              <div class="stat-val" id="val-response">0ms</div>
-              <div class="stat-diff down" id="diff-response">
-                  <i data-lucide="arrow-down-right" style="width:12px;"></i> 12ms
-              </div>
-            </div>
-            <div class="stat-card checks">
-              <div class="stat-label">Total Checks</div>
-              <div class="stat-val" id="val-checks">0</div>
-              <div class="stat-diff up" id="diff-checks">
-                  <i data-lucide="plus" style="width:12px;"></i> 230
-              </div>
-            </div>
-            <div class="stat-card downtime">
-              <div class="stat-label">Total Downtime</div>
-              <div class="stat-val" id="val-downtime">0m 0s</div>
-              <div class="stat-diff down" id="diff-downtime">
-                  <i data-lucide="arrow-down-right" style="width:12px;"></i> 5m
-              </div>
-            </div>
-          </div>
-
-          <!-- CHARTS Row -->
-          <div class="charts-row">
-            <div class="chart-box">
-              <div class="chart-header">
-                  <span class="chart-title">Uptime Trend <span class="chart-meta" id="chart-period-uptime">(Last 7 Days)</span></span>
-                  <div class="status-badge up" id="chart-uptime-pct">0%</div>
-              </div>
-              <div style="flex:1; min-height:0;">
-                  <canvas id="uptime-chart"></canvas>
-              </div>
-            </div>
-            <div class="chart-box">
-              <div class="chart-header">
-                  <span class="chart-title">Response Time</span>
-                  <select class="report-range-select" style="padding:4px 32px 4px 12px; font-size:12px;">
-                      <option>Last 7 Days</option>
+              
+              <div class="flex-1 min-w-[200px] space-y-2">
+                  <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest pl-1">Time Period</label>
+                  <select id="time-range-select" class="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:border-primary outline-none cursor-pointer">
+                      <option value="1">Last 24 Hours</option>
+                      <option value="7" selected>Last 7 Days</option>
+                      <option value="30">Last 30 Days</option>
+                      <option value="90">Last 3 Months</option>
+                      <option value="365">Last 1 Year</option>
                   </select>
               </div>
-              <div style="flex:1; min-height:0;">
-                  <canvas id="response-chart"></canvas>
+
+              <div class="pt-6">
+                  <button class="btn-glass !py-2.5 flex items-center gap-2" id="custom-range-btn">
+                      <i data-lucide="calendar" class="w-4 h-4"></i> Custom Range
+                  </button>
               </div>
-            </div>
           </div>
 
-          <!-- Performance & Incidents -->
-          <div class="performance-row">
-            <div class="data-table-container">
-                <div class="table-header-box">
-                    <span class="chart-title">Monitor Performance</span>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table class="report-table">
-                        <thead>
-                            <tr>
-                                <th>Monitor</th>
-                                <th>Status</th>
-                                <th>Uptime %</th>
-                                <th>Avg Response</th>
-                                <th>Checks</th>
-                                <th>Incidents</th>
-                                <th>Trend</th>
-                            </tr>
-                        </thead>
-                        <tbody id="performance-body">
-                            <!-- JS populated -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-            <div class="incidents-panel">
-                <span class="chart-title">Incidents <span class="chart-meta" id="chart-period-incidents">(Last 7 Days)</span></span>
-                <div id="incidents-list" style="display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1;">
-                    <!-- JS populated -->
-                </div>
-                <button class="btn-view-all">View All <i data-lucide="arrow-right" style="width:14px;"></i></button>
-            </div>
+
+          <!-- Report Content (Hidden initially) -->
+          <div id="report-content" class="space-y-8 hidden">
+              
+              <!-- Core Metrics Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div class="premium-panel p-6 group">
+                      <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Overall Uptime</div>
+                      <div class="text-3xl font-extrabold text-white mb-2" id="val-uptime">0%</div>
+                      <div class="text-[11px] font-bold text-green-500 flex items-center gap-1" id="diff-uptime">+0.0%</div>
+                  </div>
+                  <div class="premium-panel p-6 group">
+                      <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Avg Latency</div>
+                      <div class="text-3xl font-extrabold text-white mb-2" id="val-response">0ms</div>
+                      <div class="text-[11px] font-bold text-blue-500 flex items-center gap-1" id="diff-response">-0ms</div>
+                  </div>
+                   <div class="premium-panel p-6 group">
+                      <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Checks Run</div>
+                      <div class="text-3xl font-extrabold text-white mb-2" id="val-checks">0</div>
+                      <div class="text-[11px] font-bold text-yellow-500 flex items-center gap-1" id="diff-checks">+0</div>
+                  </div>
+                  <div class="premium-panel p-6 group">
+                      <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Downtime</div>
+                      <div class="text-3xl font-extrabold text-red-500 mb-2" id="val-downtime">0m</div>
+                      <div class="text-[11px] font-bold text-red-400 flex items-center gap-1" id="diff-downtime">-0m</div>
+                  </div>
+              </div>
+
+              <!-- Charts Grid -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div class="premium-panel p-8">
+                      <div class="flex justify-between items-center mb-8">
+                          <h3 class="text-sm font-bold text-white uppercase tracking-widest">Uptime Evolution</h3>
+                          <span class="text-[10px] text-gray-600 font-bold uppercase tracking-widest" id="chart-period-uptime">LAST 7 DAYS</span>
+                      </div>
+                      <div class="h-64">
+                          <canvas id="uptime-chart"></canvas>
+                      </div>
+                  </div>
+                  <div class="premium-panel p-8">
+                      <div class="flex justify-between items-center mb-8">
+                          <h3 class="text-sm font-bold text-white uppercase tracking-widest">Latency Distribution</h3>
+                          <span class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">AVG MS</span>
+                      </div>
+                      <div class="h-64">
+                          <canvas id="response-chart"></canvas>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Detailed performance table -->
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 premium-panel p-0 overflow-hidden">
+                        <div class="p-6 border-b border-white/5">
+                            <h3 class="text-sm font-bold text-white uppercase tracking-widest">Monitor Performance</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-white/[0.02] text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                    <tr>
+                                        <th class="px-6 py-4">Monitor</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4 text-center">Uptime</th>
+                                        <th class="px-6 py-4 text-center">Latency</th>
+                                        <th class="px-6 py-4 text-center">Checks</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="performance-body" class="divide-y divide-white/5">
+                                    <!-- Injected -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="premium-panel p-8 flex flex-col">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-6">Recent Incidents</h3>
+                        <div id="incidents-list" class="flex-1 space-y-4 pr-2 overflow-y-auto"></div>
+                        <div class="mt-8 pt-6 border-t border-white/5">
+                            <button onclick="window.reports.exportPDF()" class="w-full btn-primary !bg-white/5 text-white border border-white/10 hover:!bg-white/10 flex items-center justify-center gap-3">
+                                <i data-lucide="download" class="w-4 h-4"></i> Export PDF Report
+                            </button>
+                        </div>
+                    </div>
+              </div>
+
           </div>
 
-          <!-- FOOTER EXPORT -->
-          <div class="reports-footer">
-              <span style="color:var(--text-dim); font-size:13px; font-weight:700; margin-right:16px; align-self:center;">Export Report</span>
-              <button class="export-btn" onclick="window.reports.exportPDF()">
-                  <i data-lucide="file-text" style="color:var(--accent-downtime);"></i> PDF
-              </button>
-              <button class="export-btn" onclick="window.reports.exportCSV()">
-                  <i data-lucide="table" style="color:var(--accent-uptime);"></i> CSV
-              </button>
-              <button class="export-btn primary">
-                  <i data-lucide="share-2"></i> Save Report
-              </button>
-          </div>
-      </div>
-
-      <!-- EMPTY STATE / LOADING -->
-      <div id="report-empty" class="empty-state">
-           <div style="width:100px; height:100px; background:rgba(255,255,255,0.02); border-radius:30px; border:2px dashed var(--border-glass); display:flex; align-items:center; justify-content:center; margin-bottom:24px;">
-               <i data-lucide="bar-chart-3" style="width:48px; height:48px; opacity:0.1; color:#fff;"></i>
-           </div>
-           <h2 style="font-size:24px; font-weight:800; color:#fff; margin-bottom:8px;">Ready to Analyze?</h2>
-           <p style="color:var(--text-dim); max-width:320px; text-align:center; font-weight:500;">Select monitors and a time range to generate your performance report.</p>
-           <button class="btn-primary" onclick="document.getElementById('generate-btn').click()" style="margin-top:24px;">Quick Start</button>
+        </div>
       </div>
     </div>
-  </div>
+
+  </main>
 </div>
 
-<!-- CUSTOM RANGE MODAL -->
-<div class="custom-modal" id="custom-modal">
-    <div class="modal-content">
-        <h3 class="modal-title">Custom Range</h3>
-        <p class="modal-sub">Select start and end dates for your report.</p>
-        <div class="form-group">
-            <label class="form-label">Start Date</label>
-            <input type="date" class="form-input" id="start-date">
+<!-- Custom Range Modal -->
+<div id="custom-modal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(10px);">
+    <div class="premium-panel p-8 w-full max-w-[400px] animate-slide-up">
+        <h2 class="text-xl font-bold text-white mb-2">Custom Range</h2>
+        <p class="text-xs text-gray-500 mb-8">Select start and end dates for audit.</p>
+        
+        <div class="space-y-6">
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Start Date</label>
+                <input type="date" id="start-date" class="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-white outline-none">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">End Date</label>
+                <input type="date" id="end-date" class="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-white outline-none">
+            </div>
         </div>
-        <div class="form-group">
-            <label class="form-label">End Date</label>
-            <input type="date" class="form-input" id="end-date">
-        </div>
-        <div class="modal-actions">
-            <button class="btn-cancel" onclick="document.getElementById('custom-modal').classList.remove('flex')">Cancel</button>
-            <button class="btn-submit" id="apply-custom-range">Apply Range</button>
+
+        <div class="mt-8 pt-6 border-t border-white/5 flex gap-3">
+             <button onclick="document.getElementById('custom-modal').style.display='none'" class="btn-glass flex-1">Cancel</button>
+             <button id="apply-custom-range" class="btn-primary flex-1">Apply Range</button>
         </div>
     </div>
 </div>
 
-<script src="/static/js/app.js"></script>
-<script src="/static/js/reports.js"></script>
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js?v=3"></script>
+<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/reports.js?v=3"></script>
+<script src="/static/js/toast.js"></script>
 <script>
   lucide.createIcons();
-  setTimeout(() => {
-    const link = document.getElementById('reports-link');
-    if (link) link.classList.add('active');
-  }, 500);
 </script>
 </body>
 </html>

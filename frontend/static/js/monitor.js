@@ -541,48 +541,66 @@ function closeMonitorReport() {
         const mapContainer = document.getElementById('user-map');
         if (!mapContainer) return;
 
+        let geoData = {
+            country_code: 'US',
+            country_name: 'United States',
+            city: 'New York',
+            latitude: 40.7128,
+            longitude: -74.0060
+        };
+
         try {
-            // 1. Fetch Location
-            const geoRes = await fetch('https://ipapi.co/json/');
-            const geoData = await geoRes.json();
+            // 1. Fetch Location (with timeout)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
             
-            const { country_code, country_name, city, latitude, longitude } = geoData;
+            const geoRes = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+            clearTimeout(timeoutId);
             
-            // 2. Update Text
-            const accessTextEl = document.getElementById('user-access-text');
-            if (accessTextEl) {
-                accessTextEl.innerText = `Accessed from ${city}, ${country_name}`;
+            if (geoRes.ok) {
+                geoData = await geoRes.json();
             }
-
-            // 3. Init Map
-            userMapInstance = new jsVectorMap({
-                selector: '#user-map',
-                map: 'world',
-                backgroundColor: 'transparent',
-                draggable: true,
-                zoomButtons: false,
-                regionsSelectable: false,
-                markerStyle: {
-                    initial: { fill: '#22c55e', stroke: '#fff', strokeWidth: 2, r: 5 },
-                    hover: { fill: '#4ade80' }
-                },
-                regionStyle: {
-                    initial: { fill: 'rgba(255,255,255,0.08)', stroke: 'rgba(255,255,255,0.05)', strokeWidth: 0.5 },
-                    hover: { fill: 'rgba(255,255,255,0.15)' }
-                },
-                selectedRegions: [country_code],
-                selectedRegionStyle: {
-                    initial: { fill: '#22c55e' }
-                },
-                markers: [
-                    { name: city, coords: [latitude, longitude] }
-                ]
-            });
-
         } catch (err) {
-            console.error("Map initialization failed", err);
-            const accessTextEl = document.getElementById('user-access-text');
-            if (accessTextEl) accessTextEl.innerText = "Location access blocked";
+            console.warn("Map geo-location failed, using default fallback", err);
+        }
+            
+        const { country_code, country_name, city, latitude, longitude } = geoData;
+        
+        // 2. Update Text
+        const accessTextEl = document.getElementById('user-access-text');
+        if (accessTextEl) {
+            accessTextEl.innerText = `Accessed from ${city || 'Global Layer'}, ${country_name || 'Monitoring Node'}`;
+        }
+
+        // 3. Init Map
+        if (window.jsVectorMap) {
+            try {
+                userMapInstance = new jsVectorMap({
+                    selector: '#user-map',
+                    map: 'world',
+                    backgroundColor: 'transparent',
+                    draggable: true,
+                    zoomButtons: false,
+                    regionsSelectable: false,
+                    markerStyle: {
+                        initial: { fill: '#3b82f6', stroke: '#fff', strokeWidth: 2, r: 5 },
+                        hover: { fill: '#2563eb' }
+                    },
+                    regionStyle: {
+                        initial: { fill: 'rgba(255,255,255,0.08)', stroke: 'rgba(255,255,255,0.05)', strokeWidth: 0.5 },
+                        hover: { fill: 'rgba(59, 130, 246, 0.2)' }
+                    },
+                    selectedRegions: country_code ? [country_code] : [],
+                    selectedRegionStyle: {
+                        initial: { fill: 'rgba(59, 130, 246, 0.3)' }
+                    },
+                    markers: [
+                        { name: city || 'Access Point', coords: [latitude || 0, longitude || 0] }
+                    ]
+                });
+            } catch(e) { console.error("jsVectorMap init error:", e); }
+        } else {
+            console.error("jsVectorMap library not found");
         }
     }
 
