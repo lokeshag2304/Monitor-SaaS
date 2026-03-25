@@ -46,6 +46,13 @@ class UserResponse(UserBase):
     id: int
     role: str
     created_at: datetime
+    profile_image: Optional[str] = None
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    timezone: Optional[str] = None
+    notification_preferences: Optional[str] = None
+    default_check_interval: Optional[int] = None
+    is_active: bool = True
     
     class Config:
         orm_mode = True

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from backend.database import Base
 
@@ -16,6 +17,8 @@ class Incident(Base):
     duration_seconds = Column(Float, nullable=True)
     duration = Column(Float, nullable=True) # Keeping old column for compat
     reason = Column(String(500), nullable=True)
+
+    updates = relationship("IncidentUpdate", back_populates="incident", cascade="all, delete-orphan", passive_deletes=True)
 
     def __repr__(self):
         return f"<Incident(monitor={self.monitor_id}, new_status={self.new_status}, started={self.started_at})>"

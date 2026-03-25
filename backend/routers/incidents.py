@@ -77,7 +77,14 @@ def get_incidents(
             "resolved_at": inc.resolved_at.isoformat() if inc.resolved_at else None,
             "duration": format_duration(duration_val),
             "duration_seconds": duration_val,
-            "reason": inc.reason or "No details"
+            "reason": inc.reason or "No details",
+            "updates": [
+                {
+                    "status": u.status,
+                    "message": u.message,
+                    "timestamp": u.timestamp.isoformat()
+                } for u in sorted(inc.updates, key=lambda x: x.timestamp)
+            ]
         })
         
     return {

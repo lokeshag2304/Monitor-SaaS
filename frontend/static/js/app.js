@@ -29,12 +29,117 @@ if (!token) {
         }
     }
 
+    /**
+     * Reusable Avatar Component
+     * @param {Object} user 
+     * @param {number} size 
+     * @returns {string} HTML String
+     */
+    window.renderAvatar = function(user, size = 40) {
+        if (!user) return `<div class="user-avatar-placeholder" style="width:${size}px; height:${size}px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center;"><i data-lucide='user' style='width:${size/2}px; height:${size/2}px; color:#4d6a80;'></i></div>`;
+        
+        const displayName = user.name || (user.email ? user.email.split('@')[0] : 'User');
+        const imgPath = user.profile_image || user.profileImage;
+        const fallbackIcon = `<i data-lucide='user' style='width:${size/2}px; height:${size/2}px; color:#fff;'></i>`;
+        
+        // Generate Initials
+        const parts = displayName.trim().split(' ');
+        const initials = parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0][0].toUpperCase();
+
+        let avatarContent = `<span style="font-size:${size/2.8}px; font-weight:700; color:#fff;">${initials}</span>`;
+        let extraStyles = `background:linear-gradient(135deg,#2563eb,#06b6d4);`;
+
+        if (imgPath) {
+            const cacheBuster = imgPath.includes('?') ? `&t=${Date.now()}` : `?t=${Date.now()}`;
+            avatarContent = `<img src="${imgPath}${cacheBuster}" 
+                style="width:100%; height:100%; object-fit:cover; display:block;" 
+                onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex'; if(window.lucide) lucide.createIcons();" />
+                <div class="avatar-fallback-placeholder" style="display:none; width:100%; height:100%; align-items:center; justify-content:center;">${fallbackIcon}</div>`;
+            extraStyles = `background:rgba(255,255,255,0.05); overflow:hidden;`;
+        }
+
+        return `<div class="custom-avatar-comp" data-user-id="${user.id || ''}" 
+            style="width:${size}px; height:${size}px; min-width:${size}px; min-height:${size}px; border-radius:50%; display:flex; align-items:center; justify-content:center; ${extraStyles}">
+            ${avatarContent}
+        </div>`;
+    };
+
+    window.updateSidebarProfile = function(user) {
+        if (!user) return;
+        const userNameEl = document.getElementById('user-name');
+        const userRoleEl = document.getElementById('user-role');
+        const userAvatarEl = document.getElementById('user-avatar');
+        
+        const displayName = user.name || (user.email ? user.email.split('@')[0] : 'User');
+        if (userNameEl) userNameEl.textContent = displayName;
+        
+        const roleText = (user.role === 'ADMIN' || user.role === 'admin') ? 'Super Admin' : 'Team Member';
+        if (userRoleEl) userRoleEl.textContent = roleText;
+        
+        if (userAvatarEl) {
+            userAvatarEl.innerHTML = window.renderAvatar(user, 40);
+            userAvatarEl.style.background = 'transparent';
+            userAvatarEl.style.boxShadow = 'none';
+        }
+        
+        localStorage.setItem('user', JSON.stringify(user));
+        window.currentUser = user;
+        
+        // Apply Personalization
+        window.applyUserPreferences(user);
+        
+        if(window.lucide) lucide.createIcons();
+    };
+
+    /**
+     * Apply all personalization settings to the document
+     * @param {Object} user 
+     */
+    window.applyUserPreferences = function(user) {
+        if (!user) return;
+        const body = document.body;
+        
+        // 1. Theme Mode
+        const theme = user.theme_mode || localStorage.getItem('theme') || 'dark';
+        if (typeof applyTheme === 'function') applyTheme(theme);
+        
+        // 2. Accent Color
+        if (user.theme_color) {
+            const body = document.body;
+            body.style.setProperty('--primary', user.theme_color);
+            // Convert hex to RGB for alpha support
+            const hex = user.theme_color.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            body.style.setProperty('--primary-rgb', `${r}, ${g}, ${b}`);
+        }
+        
+        // 3. Glass Effect
+        const glass = user.glass_effect || 'normal';
+        body.classList.remove('glass-off', 'glass-subtle', 'glass-normal', 'glass-strong');
+        body.classList.add(`glass-${glass}`);
+        
+        // 4. Background Color
+        if (user.background_alt) {
+            body.style.setProperty('--bg-main', user.background_alt);
+        }
+        
+        // 5. Font Family
+        if (user.font_family) {
+            const fontClass = `font-${user.font_family.toLowerCase().replace(' ', '-')}`;
+            body.classList.remove('font-inter', 'font-poppins', 'font-roboto', 'font-montserrat', 'font-space-grotesk');
+            body.classList.add(fontClass);
+        }
+    };
+
     function initSidebarEvents() {
         const logoutBtn = document.getElementById('logout-btn') || document.getElementById('logout-btn-sidebar');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 localStorage.removeItem('token');
+                localStorage.removeItem('user');
                 window.location.href = '/';
             });
         }
@@ -50,17 +155,11 @@ if (!token) {
         });
         
         // Ensure user meta displays properly in sidebar
-        if (window.currentUser && window.currentUser.name) {
-            const userNameEl = document.getElementById('user-name');
-            const userRoleEl = document.getElementById('user-role');
-            const userAvatarEl = document.getElementById('user-avatar');
-            
-            if (userNameEl) userNameEl.textContent = currentUser.name;
-            if (userRoleEl) userRoleEl.textContent = currentUser.role === 'ADMIN' ? 'Super Admin' : 'User';
-            if (userAvatarEl) {
-                const parts = currentUser.name.trim().split(' ');
-                userAvatarEl.textContent = parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0][0].toUpperCase();
-            }
+        if (window.currentUser && Object.keys(window.currentUser).length > 0) {
+            window.updateSidebarProfile(window.currentUser);
+        } else {
+            const cachedUser = localStorage.getItem('user');
+            if(cachedUser) window.updateSidebarProfile(JSON.parse(cachedUser));
         }
     }
 
@@ -99,6 +198,7 @@ function toggleTheme() {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     applyTheme(newTheme);
 }
+window.applyTheme = applyTheme;
 window.toggleTheme = toggleTheme; // Expose globally
 
 // Attach theme toggle button event listener
@@ -964,26 +1064,19 @@ async function loadDashboard() {
         
         currentUser = await userRes.json();
         
-        // Update user display
-        const displayName = currentUser.name || currentUser.email.split('@')[0];
-        const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+        // Update user display dynamically 
+        window.updateSidebarProfile(currentUser);
         
-        const userRoleEl = document.getElementById('user-role');
-        const userAvatarEl = document.getElementById('user-avatar');
+        const displayName = currentUser.name || currentUser.email.split('@')[0];
         const greetingEl = document.getElementById('greeting-name-display');
-        const userNameEl = document.getElementById('user-name');
         const bulkBtnContainer = document.getElementById('admin-actions-container');
         const adminBadge = document.getElementById('admin-badge');
         
-        // Update standard info
-        if (userRoleEl) userRoleEl.innerText = 'Team Member'; // Default
+        // Update greeting
         if (greetingEl) greetingEl.innerText = displayName;
-        if (userAvatarEl) userAvatarEl.innerText = initials;
-        if (userNameEl) userNameEl.innerText = displayName;
 
         // Check & force admin display
-        if (currentUser.role === 'admin') {
-            if (userRoleEl) userRoleEl.innerText = 'Super Admin';
+        if (currentUser.role === 'admin' || currentUser.role === 'ADMIN') {
             if (adminBadge) adminBadge.classList.remove('hidden');
             
             // Create Bulk Import button if needed

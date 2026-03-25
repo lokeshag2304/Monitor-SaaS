@@ -1,5 +1,5 @@
 from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.schemas.user import UserCreate, UserResponse, UserLogin
@@ -9,6 +9,7 @@ from backend.utils.security import create_access_token
 from backend.utils.dependencies import get_current_user
 from backend.models.user import User
 from backend.config import ACCESS_TOKEN_EXPIRE_MINUTES
+from backend.utils.url import get_full_url
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -33,8 +34,10 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserResponse)
-def get_current_user_info(current_user: User = Depends(get_current_user)):
-    return current_user
+def get_current_user_info(request: Request, current_user: User = Depends(get_current_user)):
+    user_data = UserResponse.from_orm(current_user).dict()
+    user_data["profile_image"] = get_full_url(request, current_user.profile_image)
+    return user_data
 
 @router.post("/logout")
 def logout():

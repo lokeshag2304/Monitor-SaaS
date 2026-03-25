@@ -6,9 +6,10 @@ from backend.models.website import Website, WebsiteStatus
 from backend.models.check_result import CheckResult
 from backend.models.user import User, UserRole
 from backend.models.incident import Incident
+from backend.models.incident_update import IncidentUpdate
 from backend.models.monitor_status_history import MonitorStatusHistory
-from backend.models.status_page import StatusPage
 from backend.services.email_service import send_alert_email
+from backend.services.integration_service import dispatch_integration_alerts
 
 # FULL CHROME HEADERS (The Human Mask)
 HEADERS = {
@@ -37,8 +38,20 @@ async def check_website_http(url: str, timeout: int = 5):
             
             duration_ms = (end_time - start_time).total_seconds() * 1000
             status = response.status_code
-            is_up = (200 <= status < 400) or (status == 403) or (status == 401) or (status == 503)
+            # Status codes considered UP: 2xx, 3xx, 403 (for bot blocks), 401 (needs auth)
+            is_up = (200 <= status < 400) or status == 403 or status == 401
             
+            error_msg = None
+            if not is_up:
+                status_map = {
+                    404: "Not Found (404)",
+                    500: "Internal Server Error (500)",
+                    502: "Bad Gateway (502)",
+                    503: "Service Unavailable (503)",
+                    504: "Gateway Timeout (504)"
+                }
+                error_msg = status_map.get(status, f"HTTP {status} Error")
+
             if status == 403:
                 print(f"[!] {url} returned 403 (Bot Block), marking as UP. Time: {duration_ms}ms")
             else:
@@ -48,10 +61,19 @@ async def check_website_http(url: str, timeout: int = 5):
                 "is_up": is_up,
                 "status_code": status,
                 "response_time": duration_ms,
-                "error": None if is_up else f"HTTP {status}"
+                "error": error_msg
             }
+    except httpx.ConnectTimeout:
+        return {"is_up": False, "status_code": 0, "response_time": 0, "error": "Connection Timeout"}
+    except httpx.ReadTimeout:
+        return {"is_up": False, "status_code": 0, "response_time": 0, "error": "Read Timeout"}
+    except httpx.ConnectError:
+        return {"is_up": False, "status_code": 0, "response_time": 0, "error": "Connection Refused/Failed"}
     except Exception as e:
         error_msg = str(e)
+        if "getaddrinfo failed" in error_msg or "Name or service not known" in error_msg:
+            error_msg = "DNS Resolution Failed"
+        
         print(f"[X] {url} check failed: {error_msg}")
         return {
             "is_up": False,
@@ -94,49 +116,18 @@ async def process_monitoring_check(db: Session):
         )
         db.add(status_history)
 
-        # ── PART 4: Upsert status_pages record ───────────────────────────────
-        sp = db.query(StatusPage).filter(StatusPage.monitor_id == site.id).first()
-        # Compute uptime % from last 100 history entries
-        history_count = db.query(CheckResult).filter(CheckResult.website_id == site.id).count()
-        up_count = db.query(CheckResult).filter(
-            CheckResult.website_id == site.id, CheckResult.is_up == True
-        ).count()
-        uptime_pct = round((up_count / history_count * 100), 2) if history_count > 0 else 100.0
-        if sp:
-            sp.current_status = new_status.value
-            sp.last_checked = now
-            sp.uptime_percentage = uptime_pct
-        else:
-            db.add(StatusPage(
-                monitor_id=site.id,
-                current_status=new_status.value,
-                last_checked=now,
-                uptime_percentage=uptime_pct
-            ))
+        # Status page update logic removed since status_pages concept is fully rewritten as a public dashboard.
 
         # ── Alert + Incident Logic – only on status CHANGE ───────────────────
         if site.status != WebsiteStatus.UNKNOWN and site.status != new_status:
             print(f"[!] STATUS CHANGE: {site.url} | {site.status.value.upper()} -> {new_status.value.upper()}")
             
             owner = db.query(User).filter(User.id == site.owner_id).first()
+            error_detail = result.get("error") or f"Status Code: {result.get('status_code')}"
+            
             if owner:
-                recipients = [owner.email]
-                if owner.role == UserRole.USER:
-                    admins = db.query(User).filter(User.role == UserRole.ADMIN).all()
-                    for admin in admins:
-                        if admin.email not in recipients:
-                            recipients.append(admin.email)
-                
-                error_detail = result.get("error") or f"Status Code: {result.get('status_code')}"
-                
-                for email in recipients:
-                    print(f"[>] Triggering email alert for: {email}")
-                    try:
-                        send_alert_email(email, site.url, new_status.value.upper(), error_detail)
-                    except Exception as e:
-                        print(f"[x] Error sending email to {email}: {e}")
-            else:
-                print(f"[!] Alert aborted: Owner ID {site.owner_id} not found.")
+                # Dispatch Integrations
+                await dispatch_integration_alerts(db, owner.id, site.name or site.url, site.url, new_status.value, error_detail)
 
             # ── PART 1: Enriched Incident tracking ───────────────────────────
             if new_status == WebsiteStatus.DOWN:
@@ -150,6 +141,15 @@ async def process_monitoring_check(db: Session):
                     reason=result.get("error") or f"Status Code: {result.get('status_code')}"
                 )
                 db.add(new_incident)
+                db.flush()
+                
+                # Add initial update history
+                db.add(IncidentUpdate(
+                    incident_id=new_incident.id,
+                    status=new_status.value,
+                    message=f"Incident opened: {new_incident.reason}",
+                    timestamp=now
+                ))
             elif new_status == WebsiteStatus.UP:
                 open_incident = db.query(Incident).filter(
                     Incident.monitor_id == site.id,
@@ -161,6 +161,14 @@ async def process_monitoring_check(db: Session):
                     secs = (now - open_incident.started_at).total_seconds()
                     open_incident.duration = secs
                     open_incident.duration_seconds = secs
+                    
+                    # Add resolution history
+                    db.add(IncidentUpdate(
+                        incident_id=open_incident.id,
+                        status=new_status.value,
+                        message=f"Incident resolved: Service is UP again.",
+                        timestamp=now
+                    ))
 
         # ── PART 5: Manage up_since for uptime duration ──────────────────────
         if new_status == WebsiteStatus.UP:

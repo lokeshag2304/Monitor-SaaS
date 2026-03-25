@@ -444,7 +444,7 @@ write_file("frontend/static/dashboard.html", """
 
 # --- 7. UPDATE: frontend/static/js/app.js (Full Logic Overhaul) ---
 write_file("frontend/static/js/app.js", """
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = 'http://127.0.0.1:5000';
 let token = localStorage.getItem('token');
 let currentUser = {}; // Global user object
 

@@ -1,23 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Integrations — MoniFy-Ping</title>
-  <meta name="description" content="Manage Slack, Email, Discord and Webhook integrations for MoniFy-Ping.">
   <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/static/css/custom.css">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config={corePlugins:{preflight:false},darkMode:'class',theme:{extend:{colors:{
-      success:'#22c55e',danger:'#ef4444',warning:'#eab308',primary:'#2563eb',
-      bg:'var(--bg-main)',card:'var(--bg-panel)',border:'var(--border-main)',hover:'var(--bg-hover)'
-    }}}}
-  </script>
+  <style>
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto;}
+    .modal.active { display: flex; align-items: flex-start; padding: 40px 0; }
+    .modal-content { background: #0f172a; border-radius: 16px; padding: 32px; width: 500px; border: 1px solid rgba(255,255,255,0.1); margin:auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+    
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; margin-bottom: 8px; color: var(--text-dim); font-size: 14px; font-weight: 600; }
+    .form-input { width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-family: inherit; }
+    .form-input:focus { outline: none; border-color: #3b82f6; }
+    
+    .integration-card {
+        background: rgba(8, 14, 30, 0.75);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+  </style>
 </head>
 <body>
 
@@ -25,105 +35,272 @@
 <div class="bg-orb bg-orb-2"></div>
 
 <div class="app-shell">
-
-  <!-- SIDEBAR -->
   <div id="sidebar-container"></div>
 
-  <!-- MAIN -->
   <main class="main-content">
-
-    <!-- Top Header -->
-    <header class="top-header">
-      <div class="header-left">
-        <h1 class="header-title">Integrations</h1>
-      </div>
-      <div class="header-right">
-        <button id="theme-toggle" class="theme-btn" title="Toggle theme">
-          <i id="theme-toggle-dark-icon" data-lucide="moon"></i>
-          <i id="theme-toggle-light-icon" data-lucide="sun" style="color:#eab308;display:none;"></i>
-        </button>
+    <header class="top-header" style="margin-bottom: 32px; padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+      <div>
+        <h1 style="font-size:32px; font-weight:900; color:#fff;">Integrations</h1>
+        <p style="color:var(--text-dim);">Connect MoniFy to your external tools to trigger native alerts.</p>
       </div>
     </header>
 
-    <!-- Content Body -->
-    <div class="content-body" id="content-view" style="padding:32px; overflow-y:auto;">
-      <div id="integrations-content">
-        <div style="display:flex;align-items:center;justify-content:center;height:200px;">
-          <p style="color:var(--text-muted);">Loading integrations data...</p>
-        </div>
-      </div>
+    <div style="padding: 24px;" id="integrations-list">
+        <p style="color: grey;">Loading...</p>
     </div>
-
   </main>
-</div><!-- /app-shell -->
+</div>
 
-<script src="/static/js/config.js"></script>
-<script src="/static/js/api.js"></script>
-<script src="/static/js/app.js?v=3"></script>
-<script src="/static/js/toast.js"></script>
-<script>
-  console.log("Page Loaded: Integrations");
-  lucide.createIcons();
-
-  document.addEventListener("DOMContentLoaded", async () => {
-    const token = localStorage.getItem('token');
-    if (!token) { window.location.href = '/'; return; }
-
-    async function fetchData() {
-      const container = document.getElementById('integrations-content');
-      try {
-        const res = await fetch('/api/integrations', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        console.log("Integrations API response status:", res.status);
-        if (res.ok) {
-          const data = await res.json();
-          console.log("Integrations data:", data);
-
-          // Render integration cards
-          container.innerHTML = `
-            <div style="margin-bottom:24px;">
-              <h2 style="color:#fff;font-size:18px;font-weight:700;margin-bottom:6px;">Available Integrations</h2>
-              <p style="color:var(--text-muted);font-size:13px;">Connect MoniFy-Ping with your favourite tools to receive alerts.</p>
+<!-- Modal Container -->
+<div class="modal" id="config-modal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 24px; align-items:center;">
+            <div style="display:flex; gap:12px; align-items:center;">
+                <i id="modal-icon" style="width:24px; height:24px;"></i>
+                <h2 style="color:#fff; font-size:20px; font-weight:bold;" id="modal-title">Configure</h2>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;">
-              ${[
-                {icon:'mail', name:'Email', desc:'Get alerts via email on monitor status changes.', color:'#3b82f6'},
-                {icon:'message-square', name:'Slack', desc:'Send alerts directly to your Slack channels.', color:'#22c55e'},
-                {icon:'bell', name:'Discord', desc:'Get notified in your Discord server instantly.', color:'#8b5cf6'},
-                {icon:'link', name:'Webhook', desc:'Post alerts to any custom HTTP endpoint.', color:'#f59e0b'},
-              ].map(intg => `
-                <div class="glass-panel" style="display:flex;flex-direction:column;gap:12px;">
-                  <div style="display:flex;align-items:center;gap:12px;">
-                    <div style="width:44px;height:44px;border-radius:12px;background:${intg.color}22;display:flex;align-items:center;justify-content:center;">
-                      <i data-lucide="${intg.icon}" style="width:22px;height:22px;color:${intg.color};"></i>
-                    </div>
-                    <div>
-                      <div style="color:#fff;font-weight:700;font-size:15px;">${intg.name}</div>
-                      <div style="color:var(--text-muted);font-size:11px;">Not configured</div>
-                    </div>
-                  </div>
-                  <p style="color:var(--text-muted);font-size:12px;line-height:1.5;">${intg.desc}</p>
-                  <button class="btn btn-glass" style="font-size:12px;padding:6px 14px;align-self:flex-start;">
-                    Configure
-                  </button>
+            <i data-lucide="x" style="cursor:pointer; color:#888;" onclick="closeModal()"></i>
+        </div>
+
+        <form id="config-form">
+            <!-- Dynamic Form Content Injected Here -->
+            <div id="form-body"></div>
+            
+            <div class="form-group" style="margin-top:24px;">
+                <label style="display:flex; align-items:center; gap:8px; color:#fff; font-size:14px; cursor:pointer;">
+                    <input type="checkbox" id="int-enabled" checked> Enable this integration
+                </label>
+            </div>
+
+            <div style="margin-top: 32px; display:flex; justify-content:space-between;">
+                <button type="button" class="btn-glass" onclick="testIntegration()" id="test-btn">Test Alert</button>
+                <div style="display:flex; gap:12px;">
+                    <button type="button" class="btn-glass" onclick="closeModal()" style="color:#ef4444;">Cancel</button>
+                    <button type="submit" class="btn-primary" id="save-btn">Save Config</button>
                 </div>
-              `).join('')}
-            </div>`;
-          lucide.createIcons();
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+<script>
+lucide.createIcons();
+
+const API_URL = window.location.origin;
+const token = localStorage.getItem('token');
+let integrationsData = [];
+let currentProvider = null;
+
+const PROVIDERS = [
+    { id: 'email', name: 'Email (SMTP)', icon: 'mail', color: '#3b82f6', desc: 'Get alerts natively via your custom SMTP server.' },
+    { id: 'slack', name: 'Slack', icon: 'message-square', color: '#22c55e', desc: 'Send customized alert messages into Slack channels via Webhooks.' },
+    { id: 'discord', name: 'Discord', icon: 'message-circle', color: '#8b5cf6', desc: 'Fire incident alerts straight into Discord server channels.' },
+    { id: 'webhook', name: 'Custom Webhook', icon: 'link', color: '#f59e0b', desc: 'Push a POST/GET alert payload directly to an external REST endpoint.' },
+    { id: 'github', name: 'GitHub Issues', icon: 'github', color: '#fff', desc: 'Automatically create GitHub Issues when a monitor goes DOWN.' }
+];
+
+async function loadIntegrations() {
+    try {
+        const res = await fetch('/api/integrations', { headers: { 'Authorization': `Bearer ${token}` } });
+        if(res.ok) {
+            integrationsData = await res.json();
+            renderList();
         } else if (res.status === 401) {
-          window.location.href = '/';
-        } else {
-          container.innerHTML = `<div class="glass-panel" style="color:#ef4444;text-align:center;padding:40px;">Failed to load Integrations data</div>`;
+            window.location.href = '/';
         }
-      } catch (e) {
-        console.error("Fetch Error:", e);
-        container.innerHTML = `<div class="glass-panel" style="color:#ef4444;text-align:center;padding:40px;">Failed to connect to server</div>`;
-      }
+    } catch(e) { console.error(e); }
+}
+
+function renderList() {
+    const list = document.getElementById('integrations-list');
+    
+    let html = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:24px;">`;
+    
+    PROVIDERS.forEach(prov => {
+        const existing = integrationsData.find(i => i.provider === prov.id);
+        const isConfigured = !!existing;
+        const isEnabled = existing ? existing.is_enabled : false;
+        
+        let statusBadge = `<span style="background:rgba(255,255,255,0.05); color:var(--text-dim); padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;">Not Configured</span>`;
+        if (isConfigured) {
+            if (isEnabled) statusBadge = `<span style="background:rgba(34,197,94,0.1); color:var(--success); padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;">Active</span>`;
+            else statusBadge = `<span style="background:rgba(239,68,68,0.1); color:var(--danger); padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;">Disabled</span>`;
+        }
+
+        html += `
+        <div class="integration-card">
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+                    <div style="width:48px; height:48px; border-radius:12px; background:${prov.color}22; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="${prov.icon}" style="color:${prov.color}; width:24px; height:24px;"></i>
+                    </div>
+                    ${statusBadge}
+                </div>
+                <h3 style="color:#fff; font-size:18px; font-weight:700; margin:0 0 8px 0;">${prov.name}</h3>
+                <p style="color:var(--text-dim); font-size:13px; line-height:1.5; margin:0;">${prov.desc}</p>
+            </div>
+            
+            <button class="btn-primary" style="margin-top:24px; width:100%; justify-content:center;" onclick="openConfig('${prov.id}')">
+                ${isConfigured ? 'Edit Configuration' : 'Configure'}
+            </button>
+        </div>
+        `;
+    });
+    
+    html += `</div>`;
+    list.innerHTML = html;
+    lucide.createIcons();
+}
+
+function openConfig(providerId) {
+    currentProvider = providerId;
+    const providerDef = PROVIDERS.find(p => p.id === providerId);
+    const existing = integrationsData.find(i => i.provider === providerId);
+    const config = existing ? existing.config : {};
+    
+    document.getElementById('modal-title').innerText = providerDef.name;
+    document.getElementById('modal-icon').setAttribute('data-lucide', providerDef.icon);
+    document.getElementById('modal-icon').style.color = providerDef.color;
+    document.getElementById('int-enabled').checked = existing ? existing.is_enabled : true;
+
+    const body = document.getElementById('form-body');
+    let formHtml = '';
+
+    if(providerId === 'email') {
+        formHtml = `
+            <div class="form-group"><label class="form-label">SMTP Host</label><input type="text" class="form-input" id="cfg-host" value="${config.smtp_host||''}" required placeholder="smtp.gmail.com"></div>
+            <div class="form-group"><label class="form-label">SMTP Port</label><input type="number" class="form-input" id="cfg-port" value="${config.smtp_port||587}" required></div>
+            <div class="form-group"><label class="form-label">Email Address / Username</label><input type="email" class="form-input" id="cfg-email" value="${config.email||''}" required></div>
+            <div class="form-group"><label class="form-label">Password / App Password</label><input type="password" class="form-input" id="cfg-pass" value="${config.password||''}" required></div>
+            <div class="form-group"><label class="form-label">From Name</label><input type="text" class="form-input" id="cfg-from" value="${config.from_name||'MoniFy Alerts'}"></div>
+            <div class="form-group"><label style="color:#fff;font-size:14px;cursor:pointer;"><input type="checkbox" id="cfg-secure" ${config.secure ? 'checked' : ''}> Use SSL/TLS</label></div>
+        `;
+    } 
+    else if(providerId === 'slack' || providerId === 'discord') {
+        formHtml = `
+            <div class="form-group">
+                <label class="form-label">Webhook URL</label>
+                <input type="url" class="form-input" id="cfg-webhook" value="${config.webhook_url||''}" required placeholder="https://...">
+            </div>
+        `;
+    }
+    else if(providerId === 'webhook') {
+        formHtml = `
+            <div class="form-group"><label class="form-label">Endpoint URL</label><input type="url" class="form-input" id="cfg-ep" value="${config.endpoint_url||''}" required></div>
+            <div class="form-group">
+                <label class="form-label">Method</label>
+                <select class="form-input" id="cfg-method">
+                    <option value="POST" ${config.method==='POST'?'selected':''}>POST</option>
+                    <option value="GET" ${config.method==='GET'?'selected':''}>GET</option>
+                </select>
+            </div>
+            <div class="form-group"><label class="form-label">Headers (JSON)</label><textarea class="form-input" id="cfg-headers" rows="2" placeholder='{"Authorization": "Bearer token"}'>${config.headers||'{}'}</textarea></div>
+            <div class="form-group"><label class="form-label">Body Template (JSON string)</label><textarea class="form-input" id="cfg-body" rows="3" placeholder='{"text": "Monitor {{site_name}} went {{status}}"}'>${config.body_template||'{"text": "Monitor {{site_name}} went {{status}}!"}'}</textarea></div>
+        `;
+    }
+    else if(providerId === 'github') {
+        formHtml = `
+            <div class="form-group"><label class="form-label">GitHub Personal Access Token</label><input type="password" class="form-input" id="cfg-ghtoken" value="${config.github_token||''}" required></div>
+            <div class="form-group"><label class="form-label">Repository (owner/repo)</label><input type="text" class="form-input" id="cfg-repo" value="${config.repository||''}" required placeholder="octocat/Hello-World"></div>
+            <div class="form-group"><label style="color:#fff;font-size:14px;cursor:pointer;"><input type="checkbox" id="cfg-ghissue" ${config.enable_issues !== false ? 'checked' : ''}> Create Issue when DOWN</label></div>
+        `;
     }
 
-    fetchData();
-  });
+    body.innerHTML = formHtml;
+    
+    document.getElementById('test-btn').style.display = existing ? 'block' : 'none';
+    
+    lucide.createIcons();
+    document.getElementById('config-modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('config-modal').classList.remove('active');
+}
+
+document.getElementById('config-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('save-btn');
+    btn.innerText = 'Saving...';
+    btn.disabled = true;
+
+    let config = {};
+    if(currentProvider === 'email') {
+        config = {
+            smtp_host: document.getElementById('cfg-host').value,
+            smtp_port: parseInt(document.getElementById('cfg-port').value),
+            email: document.getElementById('cfg-email').value,
+            password: document.getElementById('cfg-pass').value,
+            from_name: document.getElementById('cfg-from').value,
+            secure: document.getElementById('cfg-secure').checked
+        };
+    } else if(currentProvider === 'slack' || currentProvider === 'discord') {
+        config = { webhook_url: document.getElementById('cfg-webhook').value };
+    } else if(currentProvider === 'webhook') {
+        config = {
+            endpoint_url: document.getElementById('cfg-ep').value,
+            method: document.getElementById('cfg-method').value,
+            headers: document.getElementById('cfg-headers').value,
+            body_template: document.getElementById('cfg-body').value
+        };
+    } else if(currentProvider === 'github') {
+        config = {
+            github_token: document.getElementById('cfg-ghtoken').value,
+            repository: document.getElementById('cfg-repo').value,
+            enable_issues: document.getElementById('cfg-ghissue').checked
+        };
+    }
+
+    const payload = {
+        provider: currentProvider,
+        config: config,
+        is_enabled: document.getElementById('int-enabled').checked
+    };
+
+    try {
+        const res = await fetch('/api/integrations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+        });
+        if(!res.ok) throw new Error("Failed to save configuration.");
+        
+        closeModal();
+        await loadIntegrations();
+        alert("Integration successfully saved!");
+    } catch(err) {
+        alert(err.message);
+    } finally {
+        btn.innerText = 'Save Config';
+        btn.disabled = false;
+    }
+});
+
+async function testIntegration() {
+    const btn = document.getElementById('test-btn');
+    btn.innerText = 'Sending...';
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch(`/api/integrations/${currentProvider}/test`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const data = await res.json();
+        
+        if(!res.ok) throw new Error(data.detail || "Failed to trigger test alert.");
+        alert("Test alert triggered! Please check your platform.");
+    } catch(err) {
+        alert(err.message);
+    } finally {
+        btn.innerText = 'Test Alert';
+        btn.disabled = false;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadIntegrations);
 </script>
 </body>
 </html>

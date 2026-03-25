@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Status</title>
+  <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg: #060b18;
+      --card: rgba(8, 14, 30, 0.75);
+      --border: rgba(255, 255, 255, 0.07);
+      --success: #22c55e;
+      --danger: #ef4444;
+      --text: #fff;
+      --text-dim: #8aafc8;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.5;
+    }
+    
+    /* Background Elements */
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      z-index: -1;
+      opacity: 0.15;
+    }
+    .bg-orb-1 { width: 400px; height: 400px; background: var(--success); top: -100px; left: -100px; }
+    .bg-orb-2 { width: 300px; height: 300px; background: #3b82f6; bottom: -50px; right: -50px; }
+
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 60px 20px;
+    }
+
+    /* Top Section */
+    .header-section { text-align: center; margin-bottom: 40px; }
+    .sp-logo { width: 64px; height: 64px; border-radius: 16px; margin: 0 auto 16px auto; display: block; object-fit: cover; }
+    .sp-title { font-size: 32px; font-weight: 800; margin: 0 0 8px 0; color: #fff; }
+    .sp-message { color: var(--text-dim); font-size: 15px; margin: 0 0 24px 0; max-width: 500px; margin-inline: auto; font-weight: 500; }
+
+    .overall-status {
+        padding: 20px;
+        border-radius: 16px;
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .overall-status.outage {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+    .status-text { font-size: 20px; font-weight: 800; color: var(--success); display:flex; gap:10px; align-items:center; }
+    .outage .status-text { color: var(--danger); }
+    .last-updated { font-size: 12px; color: var(--text-dim); }
+
+    /* Groups */
+    .groups-container { margin-top: 40px; display: flex; flex-direction: column; gap: 24px; }
+    .group-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 24px;
+        transition: all 0.3s;
+    }
+    .group-header {
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid transparent;
+        background: rgba(255,255,255,0.02);
+        cursor: pointer;
+    }
+    .group-header:hover { background: rgba(255,255,255,0.04); }
+    .group-card.open .group-header { border-bottom-color: var(--border); }
+    .group-name { font-size: 18px; font-weight: 700; color: #fff; display:flex; align-items:center; gap:8px; }
+    .group-name .chevron { transition: transform 0.3s; width:18px; color:var(--text-dim); }
+    .group-card.open .group-name .chevron { transform: rotate(180deg); }
+    .group-status { font-size: 14px; font-weight: 600; display:flex; align-items:center; gap:6px; }
+
+    .monitor-list { display: none; flex-direction: column; }
+    .group-card.open .monitor-list { display: flex; }
+    .monitor-item {
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .monitor-item:last-child { border-bottom: none; }
+    .monitor-name { font-size: 15px; font-weight: 500; display:flex; align-items:center; gap:8px; }
+    
+    .uptime-bars { display: flex; gap: 2px; }
+    .bar { width: 5px; height: 24px; border-radius: 2px; background: rgba(255,255,255,0.05); }
+    .bar.up { background: var(--success); }
+    .bar.down { background: var(--danger); }
+
+    .incidents-section { margin-top: 60px; }
+    .section-title { font-size: 20px; font-weight: 700; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    
+    .incident-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border-left: 4px solid var(--danger);
+    }
+    .incident-card.resolved { border-left-color: var(--success); }
+    .inc-title { font-size: 16px; font-weight: 700; color: #fff; margin: 0 0 4px 0; }
+    .inc-meta { font-size: 13px; color: var(--text-dim); display:flex; gap:12px; margin-top: 8px;}
+    .inc-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .inc-badge.resolved { background: rgba(34,197,94,0.1); color: var(--success); }
+    .inc-badge.ongoing { background: rgba(239,68,68,0.1); color: var(--danger); }
+
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+    .text-success { color: var(--success); }
+    .text-danger { color: var(--danger); }
+
+    #loading { text-align: center; padding: 100px; color: var(--text-dim); font-size: 18px; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<div class="container" id="content" style="display:none;">
+    
+    <div class="header-section">
+        <img src="/static/logo.jpg" alt="Logo" class="sp-logo" id="sp-logo" onerror="this.style.display='none'">
+        <h1 class="sp-title" id="sp-name">Service Status</h1>
+        <p class="sp-message" id="sp-message"></p>
+
+        <div class="overall-status" id="sp-overall">
+            <div class="status-text" id="overall-text">
+                <i data-lucide="check-circle"></i> All Systems Operational
+            </div>
+            <div class="last-updated" id="sp-updated">Updated just now</div>
+        </div>
+    </div>
+
+    <div class="groups-container" id="groups-list"></div>
+
+    <div class="incidents-section" id="incidents-container" style="display:none;">
+        <h2 class="section-title">Past Incidents</h2>
+        <div id="incidents-list"></div>
+    </div>
+    
+    <div style="text-align:center; margin-top:60px; font-size:12px; color:var(--text-dim); font-weight:500;">
+        Powered by <a href="/" style="color:#fff; text-decoration:none; font-weight:700;">MoniFy</a>
+    </div>
+
+</div>
+
+<div id="loading"><i data-lucide="loader" style="width:32px; height:32px; animation:spin 1s linear infinite; margin-bottom:16px;"></i><br>Loading System Status...</div>
+
+<style>
+@keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+
+<script>
+lucide.createIcons();
+const API_URL = window.location.origin;
+
+async function fetchStatus() {
+    const slug = window.location.pathname.split('/').pop();
+    
+    if(!slug) {
+        document.getElementById('loading').innerText = "Status Page Not Found";
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/api/status-pages/public/${slug}`);
+        if(res.status === 404) {
+            document.getElementById('loading').innerText = "Status Page Not Found";
+            return;
+        }
+
+        const data = await res.json();
+        render(data);
+    } catch(err) {
+        console.error(err);
+        document.getElementById('loading').innerText = "Error loading status page";
+    }
+}
+
+function render(data) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+    document.title = `${data.name} Status`;
+    document.getElementById('sp-name').innerText = data.name;
+    
+    if(data.logo) {
+        document.getElementById('sp-logo').src = data.logo;
+        document.getElementById('sp-logo').style.display = 'block';
+    } else {
+        document.getElementById('sp-logo').style.display = 'none';
+    }
+
+    document.getElementById('sp-message').innerText = data.message || "";
+    if(!data.message) document.getElementById('sp-message').style.display = 'none';
+
+    // Overall Setup
+    const overallEl = document.getElementById('sp-overall');
+    const overallText = document.getElementById('overall-text');
+    document.getElementById('sp-updated').innerText = `Updated ${new Date(data.last_updated).toLocaleString([], {hour: '2-digit', minute:'2-digit'})}`;
+
+    if(data.overall_status === "Partial Outage") {
+        overallEl.classList.add('outage');
+        overallText.innerHTML = `<i data-lucide="alert-triangle"></i> Partial Outage`;
+    } else {
+        overallEl.classList.remove('outage');
+        overallText.innerHTML = `<i data-lucide="check-circle"></i> All Systems Operational`;
+    }
+
+    // Groups
+    const gl = document.getElementById('groups-list');
+    if(data.groups.length === 0) {
+        gl.innerHTML = `<div style="text-align:center; color:grey;">No monitors configured on this status page yet.</div>`;
+    } else {
+        gl.innerHTML = data.groups.map(g => {
+            const upClass = g.status === "Operational" ? "text-success" : "text-danger";
+            
+            const monitorsHtml = g.monitors.map(m => {
+                const monUp = m.status === "Operational" ? "text-success" : "text-danger";
+                
+                // Construct Bars (Reverse history to show oldest left, newest right. Max 30)
+                let barsHtml = '';
+                if(m.history && m.history.length > 0) {
+                    barsHtml = m.history.map(up => `<div class="bar ${up ? 'up' : 'down'}"></div>`).join('');
+                } else {
+                    barsHtml = `<div class="bar up"></div>`.repeat(30); // Default to clean slate if no history
+                }
+
+                return `
+                <div class="monitor-item">
+                    <div>
+                        <div class="monitor-name"><div class="status-dot ${monUp}"></div> ${m.name}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:24px;">
+                        <div class="uptime-bars" title="Last 30 checks">
+                            ${barsHtml}
+                        </div>
+                        <div style="font-size:13px; font-weight:700; width:80px; text-align:right;" class="${monUp}">${m.status}</div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            return `
+            <div class="group-card">
+                <div class="group-header" onclick="this.parentElement.classList.toggle('open')">
+                    <div class="group-name"><i data-lucide="chevron-down" class="chevron"></i> ${g.name}</div>
+                    <div class="group-status ${upClass}"><i data-lucide="${g.status === 'Operational' ? 'check-circle' : 'alert-circle'}"></i> ${g.status}</div>
+                </div>
+                <div class="monitor-list">
+                    ${monitorsHtml}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // Incidents
+    if(data.incidents.length > 0) {
+        document.getElementById('incidents-container').style.display = 'block';
+        document.getElementById('incidents-list').innerHTML = data.incidents.map(i => {
+            const isRes = i.status === "Resolved";
+            return `
+            <div class="incident-card ${isRes ? 'resolved' : ''}">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <h3 class="inc-title">${i.title}</h3>
+                    <span class="inc-badge ${isRes ? 'resolved' : 'ongoing'}">${i.status}</span>
+                </div>
+                <div class="inc-meta">
+                    <span><i data-lucide="clock" style="width:14px; display:inline-block; vertical-align:-3px;"></i> ${i.duration}</span>
+                    <span><i data-lucide="calendar" style="width:14px; display:inline-block; vertical-align:-3px;"></i> ${new Date(i.timestamp).toLocaleString()}</span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    lucide.createIcons();
+}
+
+window.addEventListener('DOMContentLoaded', fetchStatus);
+</script>
+</body>
+</html>

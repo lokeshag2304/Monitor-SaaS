@@ -15,6 +15,6 @@ REQUEST_TIMEOUT = 10
 PAGESPEED_API_KEY = os.getenv("PAGESPEED_API_KEY", "")
 
 ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
 ]

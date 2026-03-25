@@ -219,3 +219,64 @@ def get_report_monitors(db: Session = Depends(get_db), current_user: User = Depe
     else:
         monitors = db.query(Website).filter(Website.owner_id == current_user.id).all()
     return [{"id": m.id, "name": m.name or m.url, "url": m.url} for m in monitors]
+
+@router.get("/monitor/{monitor_id}")
+def get_individual_monitor_report(
+    monitor_id: int, 
+    range: str = Query("weekly"), 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    monitor = db.query(Website).filter(Website.id == monitor_id).first()
+    if not monitor:
+        raise HTTPException(status_code=404, detail="Monitor not found")
+        
+    if current_user.role != UserRole.ADMIN and monitor.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    days_map = {'daily': 1, 'weekly': 7, 'monthly': 30, 'yearly': 365}
+    days = days_map.get(range, 7)
+    since = datetime.utcnow() - timedelta(days=days)
+
+    stat = db.query(
+        func.count(CheckResult.id).label('total'),
+        func.sum(cast(CheckResult.is_up, Integer)).label('ups'),
+        func.avg(CheckResult.response_time).label('avg_resp')
+    ).filter(
+        CheckResult.website_id == monitor_id,
+        CheckResult.checked_at >= since
+    ).first()
+
+    total_checks = stat.total or 0
+    ups = stat.ups or 0
+    avg_resp = stat.avg_resp or 0
+
+    uptime_percentage = round((ups / total_checks * 100), 2) if total_checks > 0 else 100.0
+
+    incidents = db.query(Incident).filter(
+        Incident.monitor_id == monitor_id,
+        Incident.started_at >= since
+    ).all()
+    
+    total_incidents = len(incidents)
+    
+    downtime_sec = sum((inc.duration_seconds or inc.duration or 0) for inc in incidents)
+    total_downtime_minutes = round(downtime_sec / 60.0, 2)
+
+    sla_tier = "Needs Attention"
+    if uptime_percentage >= 99.99:
+        sla_tier = "Excellent"
+    elif uptime_percentage >= 99.9:
+        sla_tier = "Very Good"
+    elif uptime_percentage >= 99.0:
+        sla_tier = "Good"
+
+    return {
+        "monitor_name": monitor.name or monitor.url,
+        "uptime_percentage": uptime_percentage,
+        "sla_tier": sla_tier,
+        "avg_response_time": round(float(avg_resp), 2),
+        "total_incidents": total_incidents,
+        "total_downtime_minutes": total_downtime_minutes,
+        "total_checks": total_checks
+    }

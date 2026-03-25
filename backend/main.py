@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 from backend.database import init_db
-from backend.routers import auth, websites, pagespeed, notifications, admin, monitors, reports, incidents, user # ADDED NEW ROUTERS
+from backend.routers import auth, websites, pagespeed, notifications, admin, monitors, reports, incidents, user, status_pages, integrations # ADDED NEW ROUTERS
 from backend.services.scheduler_service import start_scheduler
 from fastapi.responses import FileResponse
 
@@ -32,6 +32,9 @@ app.include_router(monitors.router) # MONITORS ROUTER
 app.include_router(reports.router) # REPORTS ROUTER
 app.include_router(incidents.router) # INCIDENTS ROUTER
 app.include_router(user.router) # USER ROUTER
+app.include_router(user.router_api) # USER API ROUTER
+app.include_router(status_pages.router) # STATUS PAGES ROUTER
+app.include_router(integrations.router) # INTEGRATIONS ROUTER
 
 # ── FRONTEND INTEGRATION ───────────────────────────────────────────────────
 base_dir = Path(__file__).resolve().parent.parent
@@ -40,6 +43,12 @@ frontend_dir = base_dir / "frontend"
 # Mount Static Assets (/static/css, /static/js, etc.)
 if (frontend_dir / "static").exists():
     app.mount("/static", StaticFiles(directory=str(frontend_dir / "static")), name="static")
+
+# EXPLICIT UPLOADS MOUNT to support direct /uploads/filename structure
+uploads_dir = frontend_dir / "static" / "uploads"
+if not uploads_dir.exists():
+    os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 # Helper to serve HTML files
 def serve_html(filename: str, use_static=True):
@@ -88,8 +97,13 @@ def serve_monitoring_page():
     return serve_html("monitoring.html")
 
 @app.get("/status-pages", tags=["Pages"])
+@app.get("/status-pages.html", tags=["Pages"])
 def serve_status_pages():
     return serve_html("status_pages.html")
+
+@app.get("/status/{slug}", tags=["Pages"])
+def serve_public_status_page(slug: str):
+    return serve_html("public_status.html")
 
 @app.get("/integrations", tags=["Pages"])
 def serve_integrations_page():
@@ -104,10 +118,6 @@ def serve_settings_page():
 @app.get("/support.html", tags=["Pages"])
 def serve_support_page():
     return serve_html("support.html")
-
-@app.get("/api/status-pages", tags=["API"])
-def get_status_pages():
-    return []
 
 @app.get("/api/integrations", tags=["API"])
 def get_integrations():

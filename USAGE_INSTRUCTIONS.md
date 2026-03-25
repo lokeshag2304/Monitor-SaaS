@@ -3,10 +3,10 @@
 ## 📍 Application Access
 
 **Server is running at:**
-- **Frontend (Login):** http://127.0.0.1:8000/static/index.html
-- **Dashboard:** http://127.0.0.1:8000/static/dashboard.html
-- **API Documentation:** http://127.0.0.1:8000/docs
-- **Health Check:** http://127.0.0.1:8000/health
+- **Frontend (Login):** http://127.0.0.1:5000/static/index.html
+- **Dashboard:** http://127.0.0.1:5000/static/dashboard.html
+- **API Documentation:** http://127.0.0.1:5000/docs
+- **Health Check:** http://127.0.0.1:5000/health
 
 ---
 
@@ -14,7 +14,7 @@
 
 ### Step 1: Access the Application
 1. Open your web browser
-2. Navigate to: **http://127.0.0.1:8000/static/index.html**
+2. Navigate to: **http://127.0.0.1:5000/static/index.html**
 
 ### Step 2: Create Your Account
 1. Click **"Sign Up"** link on the login page
@@ -166,7 +166,7 @@ If you're an admin, you'll see:
 ## 🛠️ Troubleshooting
 
 ### Server Not Starting?
-- Check if port 8000 is already in use
+- Check if port 5000 is already in use
 - Verify all dependencies are installed: `pip install -r requirements.txt`
 - Check for error messages in the terminal
 
@@ -228,10 +228,10 @@ If you're an admin, you'll see:
 
 ## 🆘 Need Help?
 
-- **API Documentation:** http://127.0.0.1:8000/docs
+- **API Documentation:** http://127.0.0.1:5000/docs
 - **Server Logs:** Check the terminal where the server is running
 - **Browser Console:** Press F12 to see JavaScript errors
-- **Health Check:** http://127.0.0.1:8000/health
+- **Health Check:** http://127.0.0.1:5000/health
 
 ---
 

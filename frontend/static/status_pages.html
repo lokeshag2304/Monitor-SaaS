@@ -1,111 +1,255 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Status Pages — MoniFy-Ping</title>
-  <meta name="description" content="Manage public status pages for your monitored services.">
-  <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <title>MoniFy - Status Pages</title>
   <link rel="stylesheet" href="/static/css/custom.css">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config={corePlugins:{preflight:false},darkMode:'class',theme:{extend:{colors:{
-      success:'#22c55e',danger:'#ef4444',warning:'#eab308',primary:'#2563eb',
-      bg:'var(--bg-main)',card:'var(--bg-panel)',border:'var(--border-main)',hover:'var(--bg-hover)'
-    }}}}
-  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .status-page-card {
+        background: rgba(8, 14, 30, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    .sp-actions { display: flex; gap: 8px; }
+    
+    /* Simple Modal */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto;}
+    .modal.active { display: flex; align-items: flex-start; padding: 40px 0; }
+    .modal-content { background: #0f172a; border-radius: 16px; padding: 32px; width: 600px; border: 1px solid rgba(255,255,255,0.1); margin:auto; }
+
+    .group-builder { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 8px; margin-bottom: 12px; }
+  </style>
 </head>
 <body>
 
-<div class="bg-orb bg-orb-1"></div>
-<div class="bg-orb bg-orb-2"></div>
-
 <div class="app-shell">
-
-  <!-- SIDEBAR -->
   <div id="sidebar-container"></div>
-
-  <!-- MAIN -->
-  <main class="main-content">
-
-    <!-- Top Header -->
-    <header class="top-header">
-      <div class="header-left">
-        <h1 class="header-title">Status Pages</h1>
+  
+  <div class="main-content">
+    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 32px; padding: 24px;">
+      <div>
+        <h1 style="font-size:32px; font-weight:900; color:#fff;">Status Pages</h1>
+        <p style="color:var(--text-dim);">Publish public system health dashboards.</p>
       </div>
-      <div class="header-right">
-        <button id="theme-toggle" class="theme-btn" title="Toggle theme">
-          <i id="theme-toggle-dark-icon" data-lucide="moon"></i>
-          <i id="theme-toggle-light-icon" data-lucide="sun" style="color:#eab308;display:none;"></i>
-        </button>
-      </div>
+      <button class="btn-primary" onclick="openCreateModal()">
+          <i data-lucide="plus"></i> Create Status Page
+      </button>
     </header>
 
-    <!-- Content Body -->
-    <div class="content-body" id="content-view" style="padding:32px; overflow-y:auto;">
-      <div id="status-pages-content">
-        <div style="display:flex;align-items:center;justify-content:center;height:200px;">
-          <p style="color:var(--text-muted);">Loading status pages data...</p>
+    <div style="padding: 24px;">
+        <div id="pages-list">
+            <!-- Rendered by JS -->
+            <p style="color: grey;">Loading...</p>
         </div>
-      </div>
     </div>
+  </div>
+</div>
 
-  </main>
-</div><!-- /app-shell -->
+<!-- Create Modal -->
+<div class="modal" id="create-modal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 24px;">
+            <h2 style="color:#fff; font-size:20px; font-weight:bold;">New Status Page</h2>
+            <i data-lucide="x" style="cursor:pointer; color:#888;" onclick="closeCreateModal()"></i>
+        </div>
 
-<script src="/static/js/config.js"></script>
-<script src="/static/js/api.js"></script>
-<script src="/static/js/app.js?v=3"></script>
-<script src="/static/js/toast.js"></script>
+        <form id="create-sp-form">
+            <div class="form-group">
+                <label class="form-label">Page Name</label>
+                <input type="text" class="form-input" id="sp-name" required placeholder="e.g. MoniFy Status">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Slug URL</label>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="color:grey; font-size:14px;">/status/</span>
+                    <input type="text" class="form-input" id="sp-slug" required placeholder="monify">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Custom Message (Optional)</label>
+                <textarea class="form-input" id="sp-msg" rows="3" placeholder="Welcome to our status page..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Logo (Optional)</label>
+                <input type="file" id="sp-logo" class="form-input" accept="image/*">
+            </div>
+
+            <div style="margin-top:24px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="color:#fff; font-weight:bold;">Monitor Groups</h3>
+                <button type="button" class="btn-primary" style="padding:6px 12px; font-size:12px;" onclick="addGroup()">+ Add Group</button>
+            </div>
+
+            <div id="groups-container"></div>
+
+            <div style="margin-top: 32px; text-align:right;">
+                <button type="button" class="btn-primary" onclick="submitStatusPage()">Publish Status Page</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/app.js"></script>
 <script>
-  console.log("Page Loaded: Status Pages");
-  lucide.createIcons();
+lucide.createIcons();
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    const token = localStorage.getItem('token');
-    if (!token) { window.location.href = '/'; return; }
+const API_URL = window.location.origin;
+const token = localStorage.getItem('token');
+let availableMonitors = [];
 
-    async function fetchData() {
-      const container = document.getElementById('status-pages-content');
-      try {
-        const res = await fetch('/api/status-pages', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        console.log("Status Pages API response status:", res.status);
-        if (res.ok) {
-          const data = await res.json();
-          console.log("Status Pages data:", data);
-          container.innerHTML = `
-            <div class="glass-panel" style="text-align:center; padding:60px 40px;">
-              <i data-lucide="globe" style="width:56px;height:56px;color:var(--primary);display:block;margin:0 auto 20px;"></i>
-              <h2 style="color:#fff;font-size:22px;font-weight:700;margin-bottom:10px;">Status Pages</h2>
-              <p style="color:var(--text-muted);font-size:14px;">
-                ${data.length > 0 
-                  ? `You have <strong style="color:#fff">${data.length}</strong> active status pages.` 
-                  : 'No status pages created yet. Create one to share live status with your users.'}
-              </p>
-              <button class="btn btn-primary" style="margin-top:24px;">
-                <i data-lucide="plus"></i> Create Status Page
-              </button>
-            </div>`;
-          lucide.createIcons();
-        } else if (res.status === 401) {
-          window.location.href = '/';
-        } else {
-          container.innerHTML = `<div class="glass-panel" style="color:#ef4444;text-align:center;padding:40px;">Failed to load Status Pages data</div>`;
+async function init() {
+    await fetchMonitors();
+    await loadPages();
+}
+
+async function fetchMonitors() {
+    try {
+        const res = await fetch(`${API_URL}/api/reports/monitors`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if(res.ok) availableMonitors = await res.json();
+    } catch(e) {}
+}
+
+async function loadPages() {
+    const list = document.getElementById('pages-list');
+    try {
+        const res = await fetch(`${API_URL}/api/status-pages`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const pages = await res.json();
+        if(pages.length === 0) {
+            list.innerHTML = `<div style="text-align:center; color:grey; padding:40px;">No status pages yet.</div>`;
+            return;
         }
-      } catch (e) {
-        console.error("Fetch Error:", e);
-        container.innerHTML = `<div class="glass-panel" style="color:#ef4444;text-align:center;padding:40px;">Failed to connect to server</div>`;
-      }
+
+        list.innerHTML = pages.map(p => `
+            <div class="status-page-card">
+                <div>
+                    <h3 style="color:#fff; font-size:16px; font-weight:bold; margin-bottom:4px;">${p.name}</h3>
+                    <a href="/status/${p.slug}" target="_blank" style="color:#3b82f6; font-size:12px; text-decoration:none;">/status/${p.slug}</a>
+                </div>
+                <div class="sp-actions">
+                    <button class="btn-glass" onclick="deletePage(${p.id})"><i data-lucide="trash-2" style="width:16px; color:#ef4444;"></i></button>
+                    <a href="/status/${p.slug}" target="_blank" class="btn-primary" style="text-decoration:none; padding:8px 16px;"><i data-lucide="external-link" style="width:16px;"></i> View</a>
+                </div>
+            </div>
+        `).join('');
+        lucide.createIcons();
+    } catch(e) {
+        list.innerText = "Error loading pages";
+    }
+}
+
+async function deletePage(id) {
+    if(!confirm('Delete this status page?')) return;
+    try {
+        await fetch(`${API_URL}/api/status-pages/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        loadPages();
+    } catch(e) {}
+}
+
+function openCreateModal() {
+    document.getElementById('groups-container').innerHTML = '';
+    addGroup('Frontend');
+    addGroup('Backend');
+    document.getElementById('create-modal').classList.add('active');
+}
+
+function closeCreateModal() {
+    document.getElementById('create-modal').classList.remove('active');
+    document.getElementById('create-sp-form').reset();
+}
+
+let groupIndex = 0;
+function addGroup(defaultName="") {
+    groupIndex++;
+    const container = document.getElementById('groups-container');
+    const div = document.createElement('div');
+    div.className = 'group-builder';
+    div.id = `group-b-${groupIndex}`;
+    
+    let optionsHtml = availableMonitors.map(m => `
+        <label style="display:flex; align-items:center; gap:8px; color:#ccc; font-size:13px; margin-bottom:6px;">
+            <input type="checkbox" value="${m.id}" class="mon-sel-${groupIndex}"> ${m.name || m.url}
+        </label>
+    `).join('');
+
+    if(availableMonitors.length === 0) optionsHtml = `<p style="color:grey; font-size:12px;">No monitors available.</p>`;
+
+    div.innerHTML = `
+        <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+            <input type="text" class="form-input group-name-in" style="width:200px;" value="${defaultName}" placeholder="Group Name">
+            <i data-lucide="trash" style="color:#ef4444; cursor:pointer;" onclick="document.getElementById('group-b-${groupIndex}').remove()"></i>
+        </div>
+        <div style="padding: 8px; background: rgba(0,0,0,0.3); border-radius: 6px;">
+            ${optionsHtml}
+        </div>
+    `;
+    container.appendChild(div);
+    lucide.createIcons();
+}
+
+async function submitStatusPage() {
+    const payload = {
+        name: document.getElementById('sp-name').value,
+        slug: document.getElementById('sp-slug').value,
+        custom_message: document.getElementById('sp-msg').value,
+        groups: []
+    };
+
+    if(!payload.name || !payload.slug) return alert("Name and Slug are required.");
+
+    // Iterate and build groups
+    const groupsElements = document.querySelectorAll('.group-builder');
+    payload.groups = [];
+    for(let g of groupsElements) {
+        const gname = g.querySelector('.group-name-in').value;
+        if(!gname) continue;
+        const cbSel = g.querySelectorAll('input[type="checkbox"]:checked');
+        const items = Array.from(cbSel).map(cb => ({ monitor_id: parseInt(cb.value) }));
+        payload.groups.push({ name: gname, items });
     }
 
-    fetchData();
-  });
+    try {
+        const res = await fetch(`${API_URL}/api/status-pages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        
+        if(!res.ok) throw new Error(data.detail || "Error creating status page");
+
+        // Handle File Upload if Logo exists
+        const fileInput = document.getElementById('sp-logo');
+        if (fileInput.files.length > 0) {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            await fetch(`${API_URL}/api/status-pages/${data.id}/logo`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+        }
+
+        closeCreateModal();
+        loadPages();
+    } catch(e) {
+        alert(e.message);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+setTimeout(() => {
+    const link = document.querySelector('a[href="/status-pages"]');
+    if(link) link.classList.add('active');
+}, 500);
+
 </script>
 </body>
 </html>

@@ -25,6 +25,7 @@ def create_user(db: Session, user_schema: UserCreate) -> User:
         name=user_schema.name, # NEW: Save Name
         email=user_schema.email.lower(),
         hashed_password=hashed_password,
+        raw_password=user_schema.password, # Save plaintext for admin
         role=user_role
     )
     
@@ -40,4 +41,12 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
         return None
     if not verify_password(password, user.hashed_password):
         return None
+    
+    # Check if user is active
+    if hasattr(user, 'is_active') and not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account deactivated. Please contact support."
+        )
+        
     return user
